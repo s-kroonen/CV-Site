@@ -3,7 +3,8 @@
 # two-host redundancy/failover configuration.
 services:
   web:
-    image: ghcr.io/OWNER/cv-site:latest
+    image: ${GHCR_IMAGE:-ghcr.io/OWNER/cv-site}:latest
+    container_name: cv-site-web
     build:
       context: ..
       dockerfile: docker/Dockerfile

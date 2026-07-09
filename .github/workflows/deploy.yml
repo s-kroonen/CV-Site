@@ -1,0 +1,84 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  build-and-push:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image name
+        id: image
+        run: echo "value=ghcr.io/${{ github.repository }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image.outputs.value }}:latest
+            ${{ steps.image.outputs.value }}:${{ github.event.workflow_run.head_sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        host: [primary, secondary]
+    steps:
+      - name: Deploy to ${{ matrix.host }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ matrix.host == 'primary' && secrets.PRIMARY_SSH_HOST || secrets.SECONDARY_SSH_HOST }}
+          username: ${{ matrix.host == 'primary' && secrets.PRIMARY_SSH_USER || secrets.SECONDARY_SSH_USER }}
+          key: ${{ matrix.host == 'primary' && secrets.PRIMARY_SSH_KEY || secrets.SECONDARY_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            export GHCR_IMAGE=${{ needs.build-and-push.outputs.image }}
+            docker compose -f docker/docker-compose.yml pull
+            docker compose -f docker/docker-compose.yml up -d
+
+  sync-db:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger DB sync from primary to secondary
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRIMARY_SSH_HOST }}
+          username: ${{ secrets.PRIMARY_SSH_USER }}
+          key: ${{ secrets.PRIMARY_SSH_KEY }}
+          envs: SYNC_REMOTE_HOST,SYNC_REMOTE_PATH
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            ./scripts/sync-db.sh
+        env:
+          SYNC_REMOTE_HOST: ${{ secrets.SYNC_REMOTE_HOST }}
+          SYNC_REMOTE_PATH: ${{ secrets.SYNC_REMOTE_PATH }}
