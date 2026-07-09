@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Back shortly</title>
+    <style>
+      :root {
+        --paper: #f6f1e7;
+        --ink: #211d1a;
+        --ink-muted: #57504a;
+        --accent: #b3502a;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #17140f;
+          --ink: #f2ece1;
+          --ink-muted: #b7ac9e;
+          --accent: #e07a4c;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        text-align: center;
+        padding: 1.5rem;
+      }
+      main {
+        max-width: 28rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0 0 0.75rem;
+      }
+      p {
+        color: var(--ink-muted);
+        line-height: 1.5;
+        margin: 0;
+      }
+      .dot {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Back shortly<span class="dot">.</span></h1>
+      <p>This site is temporarily unavailable. It should be back within a few minutes - thanks for your patience.</p>
+    </main>
+  </body>
+</html>

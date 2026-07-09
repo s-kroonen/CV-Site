@@ -11,15 +11,22 @@ function dbFilePath(): string {
   return url.slice("file:".length);
 }
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
-
 function createClient() {
   const adapter = new PrismaBetterSqlite3({ url: dbFilePath() });
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createClient();
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+// Lazy by design: Next's build-time page-data-collection step imports every
+// route module (even ones that are fully dynamic at runtime) just to inspect
+// their exports, without a real request or DATABASE_URL available (e.g. the
+// Docker builder stage deliberately has no .env). Eagerly constructing the
+// client here would fail that step. A Proxy defers construction to first
+// actual use, which only happens at request time.
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = (globalForPrisma.prisma ??= createClient());
+    return Reflect.get(client as object, prop, receiver);
+  },
+});
