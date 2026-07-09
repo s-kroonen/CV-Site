@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Singleton (id is always 1) - public-facing profile info.
+model Profile {
+  id          Int      @id @default(1)
+  name        String
+  tagline     String
+  bio         String
+  publicEmail String
+  location    String
+  socialLinks Json // [{ label: string, url: string }]
+  avatarPath  String?
+  resumePath  String?
+  updatedAt   DateTime @updatedAt
+}
+
+// Singleton (id is always 1) - never exposed via any public API/page.
+// Deliberately its own model so a public query can never accidentally
+// select it just by selecting "everything" on Profile.
+model PrivateContact {
+  id        Int      @id @default(1)
+  email     String
+  phone     String
+  updatedAt DateTime @updatedAt
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  company     String
+  title       String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  description String
+  bullets     Json // string[]
+  tags        Json // string[]
+  sortIndex   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([sortIndex])
+}
+
+model Education {
+  id          String    @id @default(cuid())
+  institution String
+  degree      String
+  field       String?
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+  sortIndex   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([sortIndex])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  summary     String
+  description String
+  techStack   Json // string[]
+  repoUrl     String?
+  liveUrl     String?
+  images      Json // string[]
+  featured    Boolean  @default(false)
+  status      String   @default("active") // "active" | "archived"
+  sortIndex   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortIndex])
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  proficiency Int // 0-100
+  sortIndex   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sortIndex])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  read      Boolean  @default(false)
+  ipHash    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AdminPasskey {
+  id           String   @id @default(cuid())
+  credentialId String   @unique
+  publicKey    String // base64
+  counter      Int      @default(0)
+  deviceName   String?
+  transports   Json? // string[]
+  createdAt    DateTime @default(now())
+}
