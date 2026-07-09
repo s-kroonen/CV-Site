@@ -1,0 +1,11 @@
+.git
+node_modules
+.next
+src/generated
+prisma/*.db
+prisma/*.db-journal
+.env
+.env.*
+!.env.example
+data
+*.log

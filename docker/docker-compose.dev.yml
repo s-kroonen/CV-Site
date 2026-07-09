@@ -1,0 +1,16 @@
+services:
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm install && npx prisma generate && npm run dev"
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "file:./prisma/dev.db"
+      NODE_ENV: development
+    volumes:
+      - ../:/app
+      - web_node_modules:/app/node_modules
+
+volumes:
+  web_node_modules:

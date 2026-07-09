@@ -1,0 +1,12 @@
+# Normalize all text source to LF. Windows dev + Linux Docker containers
+# don't mix well otherwise - hit this exact problem twice: entrypoint.sh's
+# shebang broke with CRLF, and mixed-endings crept into other source files
+# after a git reset --hard checked them out with core.autocrlf converting
+# them on the way in.
+* text=auto eol=lf
+
+# Shell scripts and Dockerfiles specifically must never be CRLF, regardless
+# of a user's local core.autocrlf setting - CRLF breaks the shebang when
+# these run inside Linux containers.
+*.sh text eol=lf
+Dockerfile text eol=lf
