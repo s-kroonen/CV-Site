@@ -6,13 +6,13 @@ services:
     image: ${GHCR_IMAGE:-ghcr.io/OWNER/cv-site}:latest
     container_name: cv-site-web
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
     env_file:
-      - ../.env
+      - .env
     environment:
       DATABASE_URL: "file:/data/db/prod.db"
       UPLOAD_DIR: "/data/uploads"

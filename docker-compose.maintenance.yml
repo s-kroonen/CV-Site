@@ -1,13 +1,13 @@
 # Runs independently of the main app's compose lifecycle (deliberately not
 # part of docker-compose.yml) so it survives `docker compose down`/redeploys
 # of the main app. Start once per host with:
-#   docker compose -f docker/docker-compose.maintenance.yml up -d
+#   docker compose -f docker-compose.maintenance.yml up -d
 # Then point NPM's custom error pages (502/503/504) at this container's port.
 # See docs/DEPLOYMENT.md.
 services:
   maintenance:
     build:
-      context: maintenance
+      context: docker/maintenance
     restart: always
     ports:
       - "127.0.0.1:3001:80"

@@ -86,7 +86,7 @@ Bring it up for the first time:
 
 ```bash
 export GHCR_IMAGE=ghcr.io/<owner>/<repo>
-docker compose -f docker/docker-compose.yml up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 The entrypoint runs `prisma migrate deploy` automatically and creates the
@@ -101,7 +101,7 @@ Instead, generate the one-time setup link directly with Node's built-in
 `crypto`, using the same signing scheme as `src/lib/session.ts`:
 
 ```bash
-docker compose -f docker/docker-compose.yml exec web node -e "
+docker compose -f docker-compose.yml exec web node -e "
 const { createHmac } = require('crypto');
 const secret = process.env.SESSION_SECRET;
 const body = { purpose: 'admin-bootstrap', data: {}, exp: Date.now() + 15*60*1000 };
@@ -136,7 +136,7 @@ Start the always-up maintenance page once per host, independent of the main
 app's lifecycle:
 
 ```bash
-docker compose -f docker/docker-compose.maintenance.yml up -d
+docker compose -f docker-compose.maintenance.yml up -d
 ```
 
 In NPM, under the proxy host's **Custom Error Pages** (or, if your NPM
@@ -191,7 +191,7 @@ on the secondary).
 ## 6. Verifying a deploy
 
 - `curl https://your-domain/api/health` → `{"status":"ok"}`
-- `docker compose -f docker/docker-compose.yml ps` → `web` healthy on both hosts
+- `docker compose -f docker-compose.yml ps` → `web` healthy on both hosts
 - Log into `/admin`, confirm content renders and edits show up on the public
   page immediately (everything is `force-dynamic` - no rebuild needed)
 - Stop the `web` container on one host and confirm NPM shows the maintenance
