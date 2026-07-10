@@ -2,7 +2,13 @@
 
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
+# Patch OS packages (the base image layer can lag behind Alpine's repo - this
+# is what actually fixes the openssl/libssl3/libcrypto3 CVE Trivy flags) and
+# upgrade npm itself, since the npm version bundled with node:20-alpine ships
+# its own outdated tar/glob/minimatch/sigstore that Trivy also flags as
+# vulnerable Node.js packages, despite none of them being our dependencies.
+RUN apk update && apk upgrade --no-cache && apk add --no-cache libc6-compat
+RUN npm install -g npm@11.18.0
 
 # ---- production-only deps (also generates the Prisma client against this
 # stage's own platform, so the better-sqlite3 native addon matches Alpine/musl)
