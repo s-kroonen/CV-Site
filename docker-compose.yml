@@ -1,6 +1,18 @@
 # See docs/DEPLOYMENT.md for how to wire this into your existing Nginx Proxy
 # Manager setup (shared Docker network vs. published port) and for the
 # two-host redundancy/failover configuration.
+#
+# Deliberately uses compose variable substitution (${VAR}) instead of
+# env_file: - .env for the secrets below. env_file requires a real file
+# sitting next to this compose file on disk, which works for a local
+# `docker compose up` (a .env file at the repo root) but is not something
+# Portainer's git-based stack deploys can ever have (it deploys straight from
+# the git checkout, no separate file upload step) - Portainer failed with
+# "env file /data/compose/<id>/.env not found" until this was switched over.
+# ${VAR} substitution works identically in both places: locally via the .env
+# file next to this compose file (docker compose auto-loads it for
+# substitution, no env_file directive needed), and on Portainer via that
+# stack's "Environment variables" section in its UI/API.
 services:
   web:
     image: ${GHCR_IMAGE:-ghcr.io/s-kroonen/cv-site}:latest
@@ -11,11 +23,18 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:3000"
-    env_file:
-      - .env
     environment:
       DATABASE_URL: "file:/data/db/prod.db"
       UPLOAD_DIR: "/data/uploads"
+      SITE_URL: ${SITE_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      MAIL_FROM: ${MAIL_FROM}
     volumes:
       - db_data:/data/db
       - upload_data:/data/uploads
