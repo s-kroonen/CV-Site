@@ -29,7 +29,11 @@ jobs:
 
       - name: Set image name
         id: image
-        run: echo "value=ghcr.io/${{ github.repository }}" >> "$GITHUB_OUTPUT"
+        # GHCR requires a lowercase repository path; github.repository preserves
+        # the repo's actual case (CV-Site), which docker/build-push-action then
+        # rejects with "repository name must be lowercase". No lower() function
+        # exists in GitHub Actions expression syntax, so it's done in the shell.
+        run: echo "value=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
@@ -49,36 +53,34 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     strategy:
+      # Add 'secondary' back once that host exists and its
+      # SECONDARY_PORTAINER_URL/TOKEN/STACK_ID/ENDPOINT_ID secrets are set -
+      # until then it would fail every run (empty secrets) and since a matrix
+      # job's overall status is failure if any leg fails, that would also
+      # block sync-db below via needs: deploy.
       matrix:
-        host: [primary, secondary]
+        host: [ primary ]
     steps:
-      - name: Deploy to ${{ matrix.host }}
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ matrix.host == 'primary' && secrets.PRIMARY_SSH_HOST || secrets.SECONDARY_SSH_HOST }}
-          username: ${{ matrix.host == 'primary' && secrets.PRIMARY_SSH_USER || secrets.SECONDARY_SSH_USER }}
-          key: ${{ matrix.host == 'primary' && secrets.PRIMARY_SSH_KEY || secrets.SECONDARY_SSH_KEY }}
-          script: |
-            set -e
-            cd ${{ secrets.DEPLOY_PATH }}
-            export GHCR_IMAGE=${{ needs.build-and-push.outputs.image }}
-            docker compose -f docker-compose.yml pull
-            docker compose -f docker-compose.yml up -d
+      - name: Redeploy on ${{ matrix.host }}
+        run: |
+          BASE=${{ matrix.host == 'primary' && secrets.PRIMARY_PORTAINER_URL || secrets.SECONDARY_PORTAINER_URL }}
+          TOKEN=${{ matrix.host == 'primary' && secrets.PRIMARY_PORTAINER_TOKEN || secrets.SECONDARY_PORTAINER_TOKEN }}
+          SID=${{ matrix.host == 'primary' && secrets.PRIMARY_STACK_ID || secrets.SECONDARY_STACK_ID }}
+          EID=${{ matrix.host == 'primary' && secrets.PRIMARY_ENDPOINT_ID || secrets.SECONDARY_ENDPOINT_ID }}
+          curl -fsSL -X PUT \
+            "$BASE/api/stacks/$SID/git/redeploy?endpointId=$EID" \
+            -H "X-API-Key: $TOKEN" -H "Content-Type: application/json" \
+            -d '{"PullImage": true, "Prune": false}'
 
   sync-db:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger DB sync from primary to secondary
+      - name: Trigger DB sync on primary
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.PRIMARY_SSH_HOST }}
-          username: ${{ secrets.PRIMARY_SSH_USER }}
-          key: ${{ secrets.PRIMARY_SSH_KEY }}
-          envs: SYNC_REMOTE_HOST,SYNC_REMOTE_PATH
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-            ./scripts/sync-db.sh
-        env:
-          SYNC_REMOTE_HOST: ${{ secrets.SYNC_REMOTE_HOST }}
-          SYNC_REMOTE_PATH: ${{ secrets.SYNC_REMOTE_PATH }}
+          port: ${{ secrets.PRIMARY_SSH_PORT }}
+          username: sync
+          key: ${{ secrets.SYNC_SSH_KEY }}
+          script: "sync"        # ignored — the forced command runs /opt/sync/sync-cv-site.sh

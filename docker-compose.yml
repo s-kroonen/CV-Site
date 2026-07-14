@@ -3,7 +3,7 @@
 # two-host redundancy/failover configuration.
 services:
   web:
-    image: ${GHCR_IMAGE:-ghcr.io/OWNER/cv-site}:latest
+    image: ${GHCR_IMAGE:-ghcr.io/s-kroonen/cv-site}:latest
     container_name: cv-site-web
     build:
       context: .
