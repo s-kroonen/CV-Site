@@ -141,10 +141,49 @@ create them.
 
 ## 3. Wiring into Nginx Proxy Manager
 
-Add a Proxy Host in NPM pointing at `127.0.0.1:3000` on **each** host
-(the container publishes to loopback only - NPM and the app must be
-reachable to each other, either both on the host network or joined to a
-shared Docker network). Enable the "Force SSL" + HTTP/2 options as usual.
+The container publishes to `127.0.0.1:3000` on the host - loopback only, by
+design (never reachable from the LAN or internet directly). If NPM runs
+**natively on the host** (not containerized) or with `network_mode: host`,
+it shares that same loopback and a Proxy Host pointing at `127.0.0.1:3000`
+just works.
+
+If NPM runs as its **own Docker container** (the common case, e.g. the
+`jc21/nginx-proxy-manager` image), it has its own isolated network
+namespace with its own loopback - `127.0.0.1` typed into an NPM proxy host
+config can **never** reach the app's `127.0.0.1:3000` on the host, no
+matter how correctly it's configured. (Confirmed this the hard way: a
+proxy host with the forward target set to exactly `http://127.0.0.1:3000`
+still couldn't connect, because "localhost" meant NPM's own container, not
+the host.) The fix:
+
+```bash
+docker network create npm_shared   # once per host, not owned by either stack
+```
+
+Join both `docker-compose.yml` (already done - see the `npm_shared` network
+block) and NPM's own compose file to that network, e.g. add to NPM's
+service:
+
+```yaml
+services:
+  app:                # or whatever NPM's service is named
+    networks:
+      - default
+      - npm_shared
+
+networks:
+  npm_shared:
+    external: true
+```
+
+Then in the NPM proxy host config, set **Forward Hostname/IP** to
+`cv-site-web` (the container name - Docker's internal DNS resolves it
+within the shared network) and **Forward Port** to `3000`. No IP, no
+loopback, no LAN exposure - verified this resolves and responds correctly
+by running a throwaway container on `npm_shared` and curling
+`http://cv-site-web:3000/api/health` from it.
+
+Enable the "Force SSL" + HTTP/2 options as usual.
 
 ### Custom error page (local fallback)
 

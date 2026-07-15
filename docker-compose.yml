@@ -2,6 +2,16 @@
 # Manager setup (shared Docker network vs. published port) and for the
 # two-host redundancy/failover configuration.
 #
+# NPM's container has its own network namespace with its own loopback -
+# "localhost"/127.0.0.1 typed into an NPM proxy host config can never reach
+# this host's 127.0.0.1:3000 published port, no matter how correctly it's
+# configured (confirmed this the hard way: NPM's forward target was exactly
+# "http://127.0.0.1:3000" and still couldn't connect). npm_shared is a
+# Docker network created once on the host (`docker network create
+# npm_shared`, not owned by either stack's lifecycle) that both this stack
+# and NPM's stack join, so NPM can reach this container directly by name
+# (cv-site-web:3000) instead of through the host network at all.
+#
 # Deliberately uses compose variable substitution (${VAR}) instead of
 # env_file: - .env for the secrets below. env_file requires a real file
 # sitting next to this compose file on disk, which works for a local
@@ -38,7 +48,14 @@ services:
     volumes:
       - db_data:/data/db
       - upload_data:/data/uploads
+    networks:
+      - default
+      - npm_shared
 
 volumes:
   db_data:
   upload_data:
+
+networks:
+  npm_shared:
+    external: true
