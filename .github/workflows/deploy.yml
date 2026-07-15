@@ -67,10 +67,24 @@ jobs:
           TOKEN=${{ matrix.host == 'primary' && secrets.PRIMARY_PORTAINER_TOKEN || secrets.SECONDARY_PORTAINER_TOKEN }}
           SID=${{ matrix.host == 'primary' && secrets.PRIMARY_STACK_ID || secrets.SECONDARY_STACK_ID }}
           EID=${{ matrix.host == 'primary' && secrets.PRIMARY_ENDPOINT_ID || secrets.SECONDARY_ENDPOINT_ID }}
-          curl -fsSL -X PUT \
+          # -f (fail on non-2xx) swallows the response body along with the
+          # error, which is why a 404 here only ever showed up as a bare
+          # "404" with no detail - Portainer's actual error message (wrong
+          # stack id, wrong endpoint id, stack isn't git-based, etc.) was
+          # being thrown away. Capture status + body explicitly instead.
+          RESPONSE=$(curl -sS -X PUT \
             "$BASE/api/stacks/$SID/git/redeploy?endpointId=$EID" \
             -H "X-API-Key: $TOKEN" -H "Content-Type: application/json" \
-            -d '{"PullImage": true, "Prune": false}'
+            -d '{"PullImage": true, "Prune": false}' \
+            -w $'\n%{http_code}')
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response body: $BODY"
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            echo "::error::Portainer redeploy request failed (see body above)"
+            exit 1
+          fi
 
   sync-db:
     needs: deploy

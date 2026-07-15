@@ -1,0 +1,92 @@
+{
+  "info": {
+    "name": "CV-Site Portainer Redeploy",
+    "description": "Diagnostic + redeploy requests for the Portainer stacks used by CV-Site's deploy.yml. Import an environment (Primary or Secondary) alongside this collection and select it before sending requests.\n\nSuggested order when debugging a 404 from the redeploy call:\n0. Get Portainer Status (no auth) - confirms /api is reachable at all through whatever's in front of Portainer (NPM etc). If this 404s too, the problem is routing/reverse-proxy, not the stack call.\n1. Get Endpoints - confirm endpoint_id actually exists and is the host you think it is.\n2. Get Stacks (all) - find the stack by name/id and check its real EndpointId and whether Type/GitConfig indicate it's actually a git-based stack. A very common cause of a 404 on the /git/redeploy route is that the stack isn't a git stack at all, or the endpointId you're passing doesn't match the stack's actual EndpointId.\n3. Get Stack by ID - same info, scoped to just the one stack.\n4. Redeploy Stack (git pull + redeploy) - the actual call deploy.yml makes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "X-API-Key", "type": "string" },
+      { "key": "value", "value": "{{portainer_token}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Get Portainer Status (no auth, sanity check)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{portainer_url}}/api/status",
+          "host": ["{{portainer_url}}"],
+          "path": ["api", "status"]
+        },
+        "description": "Unauthenticated endpoint that just returns Portainer's version. If this 404s, the problem is whatever's in front of Portainer (NPM proxy host config, wrong subpath, wrong hostname) rather than anything about stacks/auth - fix that first before looking at the other requests."
+      }
+    },
+    {
+      "name": "Get Endpoints (environments)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{portainer_url}}/api/endpoints",
+          "host": ["{{portainer_url}}"],
+          "path": ["api", "endpoints"]
+        },
+        "description": "Lists every Portainer environment/endpoint on this instance. Confirm {{endpoint_id}} is in this list and matches the host you expect."
+      }
+    },
+    {
+      "name": "Get Stacks (all)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{portainer_url}}/api/stacks",
+          "host": ["{{portainer_url}}"],
+          "path": ["api", "stacks"]
+        },
+        "description": "Lists every stack. Find {{stack_id}} in the response and check its EndpointId field matches {{endpoint_id}}, and that its Type/GitConfig fields show it's actually a git-based stack (the /git/redeploy route only exists for git stacks)."
+      }
+    },
+    {
+      "name": "Get Stack by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{portainer_url}}/api/stacks/{{stack_id}}",
+          "host": ["{{portainer_url}}"],
+          "path": ["api", "stacks", "{{stack_id}}"]
+        },
+        "description": "Same detail as above, scoped to one stack. A 404 here (rather than on the redeploy call) means stack_id itself is wrong on this Portainer instance."
+      }
+    },
+    {
+      "name": "Redeploy Stack (git pull + redeploy)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"PullImage\": true,\n  \"Prune\": false\n}"
+        },
+        "url": {
+          "raw": "{{portainer_url}}/api/stacks/{{stack_id}}/git/redeploy?endpointId={{endpoint_id}}",
+          "host": ["{{portainer_url}}"],
+          "path": ["api", "stacks", "{{stack_id}}", "git", "redeploy"],
+          "query": [
+            { "key": "endpointId", "value": "{{endpoint_id}}" }
+          ]
+        },
+        "description": "The exact call deploy.yml makes. If this 404s but 'Get Stack by ID' succeeds, the stack most likely isn't configured as a git-based stack in Portainer (regular/compose-upload stacks don't expose this route), or endpointId here doesn't match the stack's real EndpointId from the GET responses above."
+      }
+    }
+  ]
+}
