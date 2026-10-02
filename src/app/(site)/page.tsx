@@ -1,19 +1,22 @@
 import Link from "next/link";
-import { getProfile, getExperience, getProjects, getSkills } from "@/lib/data";
+import { getProfile, getExperience, getEducation, getProjects, getSkills } from "@/lib/data";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { ProjectsSection } from "@/components/sections/ProjectsSection";
 import { FadeInView } from "@/components/motion/FadeInView";
+import { JsonLd } from "@/components/site/JsonLd";
+import { personJsonLd } from "@/lib/structured-data";
 
 // Content is edited live via the admin panel, so this must always read
 // current DB state rather than being baked in at build time.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [profile, experience, projects, skills] = await Promise.all([
+  const [profile, experience, education, projects, skills] = await Promise.all([
     getProfile(),
     getExperience(),
+    getEducation(),
     getProjects(),
     getSkills(),
   ]);
@@ -30,6 +33,7 @@ export default async function Home() {
 
   return (
     <>
+      <JsonLd data={personJsonLd(profile, experience, education)} />
       <Hero profile={profile} />
       <About profile={profile} />
       <ExperienceSection items={experience} limit={2} moreHref="/experience" />

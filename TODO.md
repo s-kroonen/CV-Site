@@ -68,20 +68,20 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 ## 6. Findability / SEO / AI discoverability
 
 - [ ] **Search engines**
-  - [ ] Per-page `metadata` (title, description, canonical, Open Graph, Twitter cards) driven by profile data; generated OG image.
-  - [ ] `app/sitemap.ts` and `app/robots.ts` (allow public pages; disallow `/admin`, `/api`); submit to Google Search Console / Bing Webmaster.
-  - [ ] Structured data (JSON-LD): `Person`, `ProfilePage`, `WorkExperience`/`EducationalOccupationalCredential`, `CreativeWork`/`SoftwareSourceCode` for projects.
-  - [ ] Semantic HTML, one `h1` per page, heading hierarchy, meaningful link text, image alt text.
+  - [x] Per-page `metadata` (title, description, canonical, Open Graph, Twitter cards) driven by profile data; generated OG image.
+  - [x] `app/sitemap.ts` and `app/robots.ts` (allow public pages; disallow `/admin`, `/api`); submit to Google Search Console / Bing Webmaster.
+  - [x] Structured data (JSON-LD): `Person`, `ProfilePage`, `WorkExperience`/`EducationalOccupationalCredential`, `CreativeWork`/`SoftwareSourceCode` for projects.
+  - [x] Semantic HTML, one `h1` per page, heading hierarchy, meaningful link text, image alt text.
   - [ ] Core Web Vitals pass (LCP/CLS/INP), fonts/images optimised, server-rendered content (no content hidden behind JS).
-  - [ ] Dedicated crawlable URLs for individual projects (`/projects/[slug]`).
-  - [ ] Make sure the bot-hiding of private email/phone does not hide public contact info that should be indexed.
+  - [x] Dedicated crawlable URLs for individual projects (`/projects/[slug]`).
+  - [x] Make sure the bot-hiding of private email/phone does not hide public contact info that should be indexed.
 - [ ] **LLMs / AI tools**
-  - [ ] `/llms.txt` (and optionally `/llms-full.txt`) describing the site and linking clean markdown versions of the content.
-  - [ ] Markdown/plain-text rendering of CV content (`.md` routes or content negotiation) for easy ingestion.
-  - [ ] `robots.txt` rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, etc.) - decide allow/deny per bot.
-  - [ ] Public read-only JSON of the CV (`/api/cv.json`) alongside the existing PDF.
+  - [x] `/llms.txt` (and optionally `/llms-full.txt`) describing the site and linking clean markdown versions of the content.
+  - [x] Markdown/plain-text rendering of CV content (`.md` routes or content negotiation) for easy ingestion.
+  - [x] `robots.txt` rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, etc.) - decide allow/deny per bot.
+  - [x] Public read-only JSON of the CV (`/api/cv.json`) alongside the existing PDF.
   - [ ] Optional public read-only MCP endpoint / `/.well-known` discovery entry (separate from the write-capable admin MCP).
-- [ ] Analytics-free verification: Search Console, Rich Results Test, Lighthouse in CI.
+- [ ] Verify after deploy: Search Console (steps in `docs/SEO.md`), Rich Results Test, Lighthouse in CI.
 
 ## 7. Infrastructure / carry-overs
 

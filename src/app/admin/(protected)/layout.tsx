@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/site/ThemeToggle";
 import { LogoutButton } from "./LogoutButton";
 
+export const metadata = { title: "Admin", robots: { index: false, follow: false } };
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
