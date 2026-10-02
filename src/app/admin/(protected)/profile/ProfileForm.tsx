@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProfileModel, PrivateContactModel } from "@/generated/prisma/models";
 import { asSocialLinks } from "@/lib/json";
+import { ImageField, type ImageValue } from "@/components/admin/ImageField";
 import { Field, FormError, SubmitButton, TextArea, readApiError } from "@/components/admin/fields";
 
 export function ProfileForm({
@@ -17,6 +18,7 @@ export function ProfileForm({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [avatar, setAvatar] = useState<ImageValue[]>(profile?.avatarPath ? [{ src: profile.avatarPath, alt: "" }] : []);
 
   const socialLinksText = profile
     ? asSocialLinks(profile.socialLinks)
@@ -54,6 +56,7 @@ export function ProfileForm({
       bio: data.get("bio"),
       publicEmail: data.get("publicEmail"),
       location: data.get("location"),
+      avatarPath: avatar[0]?.thumb ?? avatar[0]?.src ?? null,
       socialLinks,
     };
 
@@ -88,6 +91,7 @@ export function ProfileForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Field label="Name" name="name" defaultValue={profile?.name} required />
+      <ImageField label="Profile photo" value={avatar} onChange={setAvatar} withAlt={false} hint="Shown in the page header." />
       <Field label="Tagline" name="tagline" defaultValue={profile?.tagline} />
       <TextArea label="Bio" name="bio" defaultValue={profile?.bio} rows={6} />
       <Field

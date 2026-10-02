@@ -12,7 +12,7 @@ const EXT_MIME: Record<string, string> = {
 export async function GET(_request: Request, { params }: { params: Promise<{ filename: string }> }) {
   const { filename } = await params;
 
-  // Reject anything that isn't a bare "<uuid>.<ext>" - no path traversal.
+  // Reject anything that isn't a bare "<uuid>[-thumb].<ext>" - no path traversal.
   if (!/^[a-f0-9-]+\.(png|jpg|webp|gif)$/i.test(filename)) {
     return new Response("Not found", { status: 404 });
   }

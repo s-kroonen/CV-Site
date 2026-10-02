@@ -1,4 +1,5 @@
 import { getProfile, getExperience, getEducation, getProjects, getSkills, hasPrivateContact } from "@/lib/data";
+import { getTurnstileSiteKey } from "@/lib/turnstile-config";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
@@ -37,7 +38,10 @@ export default async function Home() {
       <EducationSection items={education} />
       <ProjectsSection items={projects} />
       <SkillsSection items={skills} />
-      <ContactSection publicEmail={profile.publicEmail} hasPrivateContact={privateContactExists} />
+      <ContactSection
+        publicEmail={profile.publicEmail} hasPrivateContact={privateContactExists}
+        turnstileSiteKey={getTurnstileSiteKey()}
+      />
     </main>
   );
 }

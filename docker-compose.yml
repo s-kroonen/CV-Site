@@ -38,6 +38,8 @@ services:
       UPLOAD_DIR: "/data/uploads"
       SITE_URL: ${SITE_URL}
       SESSION_SECRET: ${SESSION_SECRET}
+      # Despite the NEXT_PUBLIC_ name this is read at runtime (lib/turnstile-config.ts),
+      # not baked into the image, so setting it here/in Portainer is enough.
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY}
       SMTP_HOST: ${SMTP_HOST}

@@ -4,12 +4,14 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { SocialLink } from "@/lib/json";
 
 export function HeroContent({
+  avatarPath,
   name,
   tagline,
   location,
   publicEmail,
   links,
 }: {
+  avatarPath?: string | null;
   name: string;
   tagline: string;
   location: string;
@@ -25,6 +27,18 @@ export function HeroContent({
 
   return (
     <div className="relative flex flex-col gap-4">
+      {avatarPath && (
+        <motion.div {...item(0)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={avatarPath}
+            alt={name}
+            width={112}
+            height={112}
+            className="h-28 w-28 rounded-full border border-line object-cover"
+          />
+        </motion.div>
+      )}
       {location && (
         <motion.p {...item(0)} className="font-mono text-xs tracking-[0.2em] text-ink-muted uppercase">
           {location}

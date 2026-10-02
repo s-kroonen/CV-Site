@@ -17,7 +17,13 @@ export function EducationSection({ items }: { items: Education[] }) {
                   {formatDateRange(item.startDate, item.endDate)}
                 </p>
               )}
-              <h3 className="mt-1 text-lg font-medium">{item.degree || item.institution}</h3>
+              <h3 className="mt-1 flex items-center gap-2 text-lg font-medium">
+                {item.logoPath && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.logoPath} alt="" width={28} height={28} loading="lazy" className="h-7 w-7 rounded object-contain" />
+                )}
+                {item.degree || item.institution}
+              </h3>
               {(item.degree ? item.institution : "") || item.field ? (
                 <p className="text-ink-muted">{[item.degree ? item.institution : "", item.field].filter(Boolean).join(" · ")}</p>
               ) : null}

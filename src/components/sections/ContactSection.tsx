@@ -2,7 +2,15 @@ import { ContactForm } from "@/components/sections/ContactForm";
 import { RevealContactInfo } from "@/components/sections/RevealContactInfo";
 import { FadeInView } from "@/components/motion/FadeInView";
 
-export function ContactSection({ publicEmail, hasPrivateContact }: { publicEmail: string; hasPrivateContact: boolean }) {
+export function ContactSection({
+  publicEmail,
+  hasPrivateContact,
+  turnstileSiteKey,
+}: {
+  publicEmail: string;
+  hasPrivateContact: boolean;
+  turnstileSiteKey?: string;
+}) {
   return (
     <FadeInView>
       <section id="contact" className="flex flex-col gap-6 py-16 pb-28">
@@ -20,8 +28,8 @@ export function ContactSection({ publicEmail, hasPrivateContact }: { publicEmail
             "For business inquiries, use the form below."
           )}
         </p>
-        {hasPrivateContact && <RevealContactInfo />}
-        <ContactForm />
+        {hasPrivateContact && <RevealContactInfo turnstileSiteKey={turnstileSiteKey} />}
+        <ContactForm turnstileSiteKey={turnstileSiteKey} />
       </section>
     </FadeInView>
   );

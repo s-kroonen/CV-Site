@@ -5,7 +5,7 @@ import { Turnstile } from "@/components/Turnstile";
 
 type State = "hidden" | "verifying" | "revealed" | "error";
 
-export function RevealContactInfo() {
+export function RevealContactInfo({ turnstileSiteKey }: { turnstileSiteKey?: string }) {
   const [state, setState] = useState<State>("hidden");
   const [info, setInfo] = useState<{ email: string; phone: string } | null>(null);
 
@@ -37,7 +37,9 @@ export function RevealContactInfo() {
   if (state === "hidden") {
     return (
       <button
-        onClick={() => setState("verifying")}
+        // Without a site key (local dev) there is no widget to wait for; the
+        // server skips verification in that case too.
+        onClick={() => (turnstileSiteKey ? setState("verifying") : handleVerified(""))}
         className="w-fit text-sm text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
       >
         Show phone / private email
@@ -47,7 +49,7 @@ export function RevealContactInfo() {
 
   return (
     <div className="flex flex-col gap-2">
-      <Turnstile onVerify={handleVerified} />
+      {turnstileSiteKey && <Turnstile siteKey={turnstileSiteKey} onVerify={handleVerified} />}
       {state === "error" && <p className="text-sm text-red-500">Could not verify. Please try again.</p>}
     </div>
   );

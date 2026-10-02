@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { MAX_UPLOAD_BYTES, sniffImageType, uploadDir } from "@/lib/uploads";
+import { MAX_UPLOAD_BYTES, processImage, sniffImageType, uploadDir } from "@/lib/uploads";
 
+// Auth: covered by the /api/admin matcher in src/proxy.ts.
 export async function POST(request: Request) {
   const form = await request.formData().catch(() => null);
   const file = form?.get("file");
@@ -15,15 +16,32 @@ export async function POST(request: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const detected = sniffImageType(buffer);
-  if (!detected) {
-    return Response.json({ error: "Unsupported or unrecognized image format." }, { status: 400 });
+  if (!sniffImageType(buffer)) {
+    return Response.json({ error: "Unsupported image format (use PNG, JPEG, WebP or GIF)." }, { status: 400 });
+  }
+
+  let processed;
+  try {
+    processed = await processImage(buffer);
+  } catch {
+    return Response.json({ error: "That image could not be read. Is the file corrupted?" }, { status: 400 });
   }
 
   const dir = uploadDir();
   await mkdir(dir, { recursive: true });
-  const filename = `${randomUUID()}.${detected.ext}`;
-  await writeFile(path.join(dir, filename), buffer);
+  const id = randomUUID();
+  await Promise.all([
+    writeFile(path.join(dir, `${id}.webp`), processed.full),
+    writeFile(path.join(dir, `${id}-thumb.webp`), processed.thumb),
+  ]);
 
-  return Response.json({ path: `/uploads/${filename}` }, { status: 201 });
+  return Response.json(
+    {
+      src: `/uploads/${id}.webp`,
+      thumb: `/uploads/${id}-thumb.webp`,
+      width: processed.width,
+      height: processed.height,
+    },
+    { status: 201 },
+  );
 }

@@ -6,7 +6,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 // tokens (the old forms used `text-background`, which isn't a defined colour,
 // so button text rendered the same colour as its background = invisible).
 
-const inputClass =
+export const inputClass =
   "rounded-md border border-line bg-paper px-3 py-2 text-ink placeholder:text-ink-muted/60 focus:border-accent focus:outline-none";
 
 export function Field({

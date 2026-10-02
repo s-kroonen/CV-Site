@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ExperienceModel } from "@/generated/prisma/models";
 import { asStringArray } from "@/lib/json";
+import { ImageField, type ImageValue } from "@/components/admin/ImageField";
 import { Field, FormError, SubmitButton, TagInput, TextArea, readApiError } from "@/components/admin/fields";
 
 function toDateInput(d: Date | string | null | undefined): string {
@@ -15,6 +16,7 @@ export function ExperienceForm({ item }: { item?: ExperienceModel }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [logo, setLogo] = useState<ImageValue[]>(item?.logoPath ? [{ src: item.logoPath, alt: "" }] : []);
   const [tags, setTags] = useState<string[]>(item ? asStringArray(item.tags) : []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -29,6 +31,7 @@ export function ExperienceForm({ item }: { item?: ExperienceModel }) {
       .filter(Boolean);
 
     const payload = {
+      logoPath: logo[0]?.thumb ?? logo[0]?.src ?? null,
       company: data.get("company"),
       title: data.get("title"),
       location: data.get("location") || null,
@@ -61,6 +64,7 @@ export function ExperienceForm({ item }: { item?: ExperienceModel }) {
       <p className="text-sm text-ink-muted">Fill in a job title or a company - everything else is optional.</p>
       <Field label="Job title" name="title" defaultValue={item?.title} />
       <Field label="Company" name="company" defaultValue={item?.company} />
+      <ImageField label="Logo" value={logo} onChange={setLogo} withAlt={false} hint="Company or school logo shown next to the entry." />
       <Field label="Location" name="location" defaultValue={item?.location ?? ""} />
       <div className="grid grid-cols-2 gap-4">
         <Field label="Start date" name="startDate" type="date" defaultValue={toDateInput(item?.startDate)} />

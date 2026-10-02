@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { asStringArray } from "@/lib/json";
+import { asImages, asStringArray } from "@/lib/json";
 import type { ProjectModel as Project } from "@/generated/prisma/models";
 import { FadeInView } from "@/components/motion/FadeInView";
 
@@ -59,6 +59,7 @@ export function ProjectsSection({ items }: { items: Project[] }) {
           <AnimatePresence mode="popLayout">
             {filtered.map((project) => {
               const tech = asStringArray(project.techStack);
+              const cover = asImages(project.images)[0];
               return (
                 <motion.div
                   key={project.id}
@@ -73,6 +74,15 @@ export function ProjectsSection({ items }: { items: Project[] }) {
                     href={`/projects/${project.slug}`}
                     className="flex h-full flex-col gap-2 rounded-lg border border-line p-5 shadow-sm transition-shadow hover:shadow-md"
                   >
+                    {cover && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={cover.thumb ?? cover.src}
+                        alt={cover.alt || project.title}
+                        loading="lazy"
+                        className="mb-2 aspect-video w-full rounded-md object-cover"
+                      />
+                    )}
                     <h3 className="text-lg font-medium">{project.title}</h3>
                     {project.summary && <p className="text-ink-muted">{project.summary}</p>}
                     {tech.length > 0 && (

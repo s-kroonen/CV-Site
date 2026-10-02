@@ -40,10 +40,16 @@ export function ExperienceSection({ items }: { items: Experience[] }) {
                 {dateRange && (
                   <p className="font-mono text-xs text-ink-muted uppercase tracking-wide">{dateRange}</p>
                 )}
-                <h3 className="mt-1 text-lg font-medium">
+                <h3 className="mt-1 flex items-center gap-2 text-lg font-medium">
+                  {item.logoPath && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.logoPath} alt="" width={28} height={28} loading="lazy" className="h-7 w-7 rounded object-contain" />
+                  )}
+                  <span>
                   {item.title}
                   {item.title && item.company && <span className="text-ink-muted"> · </span>}
                   <span className={item.title ? "text-ink-muted" : ""}>{item.company}</span>
+                  </span>
                 </h3>
                 {item.location && <p className="text-sm text-ink-muted">{item.location}</p>}
                 {item.description && <p className="mt-2 max-w-2xl text-ink-muted">{item.description}</p>}

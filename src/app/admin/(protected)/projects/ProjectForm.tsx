@@ -3,36 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProjectModel } from "@/generated/prisma/models";
-import { asStringArray } from "@/lib/json";
+import { asImages, asStringArray } from "@/lib/json";
+import { ImageField, type ImageValue } from "@/components/admin/ImageField";
 import { Field, FormError, SubmitButton, TagInput, TextArea, readApiError } from "@/components/admin/fields";
 
 export function ProjectForm({ item }: { item?: ProjectModel }) {
   const router = useRouter();
-  const [images, setImages] = useState<string[]>(item ? asStringArray(item.images) : []);
+  const [images, setImages] = useState<ImageValue[]>(item ? asImages(item.images) : []);
   const [techStack, setTechStack] = useState<string[]>(item ? asStringArray(item.techStack) : []);
-  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setError(null);
-
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body: form });
-    setUploading(false);
-    event.target.value = "";
-
-    if (!res.ok) {
-      setError("Image upload failed.");
-      return;
-    }
-    const body = await res.json();
-    setImages((prev) => [...prev, body.path]);
-  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,28 +71,13 @@ export function ProjectForm({ item }: { item?: ProjectModel }) {
         <Field label="Live URL" name="liveUrl" type="url" defaultValue={item?.liveUrl ?? ""} placeholder="https://" />
       </div>
 
-      <div className="flex flex-col gap-2 text-sm">
-        <span className="text-ink-muted">
-          Images <span className="text-xs opacity-70">(optional)</span>
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {images.map((src) => (
-            <div key={src} className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-16 w-16 rounded object-cover" />
-              <button
-                type="button"
-                aria-label="Remove image"
-                onClick={() => setImages((prev) => prev.filter((s) => s !== src))}
-                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-ink text-xs text-paper"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-        <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} />
-      </div>
+      <ImageField
+        label="Images"
+        value={images}
+        onChange={setImages}
+        multiple
+        hint="The first image is the card cover. Uploads are resized and converted to WebP."
+      />
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="featured" defaultChecked={item?.featured} className="accent-[var(--accent)]" />
@@ -121,7 +86,7 @@ export function ProjectForm({ item }: { item?: ProjectModel }) {
 
       <Field label="Sort index" name="sortIndex" type="number" defaultValue={item?.sortIndex ?? 0} hint="Lower numbers appear first." />
       <FormError message={error} />
-      <SubmitButton pending={saving} disabled={uploading} />
+      <SubmitButton pending={saving} />
     </form>
   );
 }

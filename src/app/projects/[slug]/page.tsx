@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getProjectBySlug } from "@/lib/data";
-import { asStringArray } from "@/lib/json";
+import { asImages, asStringArray } from "@/lib/json";
 import { FadeInView } from "@/components/motion/FadeInView";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,7 @@ export default async function ProjectPage({
   if (!project) notFound();
 
   const tech = asStringArray(project.techStack);
+  const images = asImages(project.images);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
@@ -37,6 +38,22 @@ export default async function ProjectPage({
             </div>
           )}
           {project.description && <p className="max-w-2xl whitespace-pre-wrap text-ink-muted">{project.description}</p>}
+          {images.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {images.map((img, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={img.src}
+                  src={img.src}
+                  alt={img.alt || `${project.title} screenshot ${i + 1}`}
+                  width={img.width}
+                  height={img.height}
+                  loading={i === 0 ? "eager" : "lazy"}
+                  className="h-auto w-full rounded-lg border border-line"
+                />
+              ))}
+            </div>
+          )}
           <div className="flex gap-4 text-sm">
             {project.repoUrl && (
               <a

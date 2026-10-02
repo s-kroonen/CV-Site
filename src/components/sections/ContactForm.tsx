@@ -5,7 +5,7 @@ import { Turnstile } from "@/components/Turnstile";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-export function ContactForm() {
+export function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string }) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export function ContactForm() {
         <input id="website" name="website" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <Turnstile onVerify={setTurnstileToken} />
+      {turnstileSiteKey && <Turnstile siteKey={turnstileSiteKey} onVerify={setTurnstileToken} />}
 
       {status === "error" && <p className="text-sm text-red-500">{errorMessage}</p>}
       <button

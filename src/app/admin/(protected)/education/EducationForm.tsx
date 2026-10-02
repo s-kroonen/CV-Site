@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { EducationModel } from "@/generated/prisma/models";
+import { ImageField, type ImageValue } from "@/components/admin/ImageField";
 import { Field, FormError, SubmitButton, TextArea, readApiError } from "@/components/admin/fields";
 
 function toDateInput(d: Date | string | null | undefined): string {
@@ -14,6 +15,7 @@ export function EducationForm({ item }: { item?: EducationModel }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [logo, setLogo] = useState<ImageValue[]>(item?.logoPath ? [{ src: item.logoPath, alt: "" }] : []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,6 +24,7 @@ export function EducationForm({ item }: { item?: EducationModel }) {
 
     const data = new FormData(event.currentTarget);
     const payload = {
+      logoPath: logo[0]?.thumb ?? logo[0]?.src ?? null,
       institution: data.get("institution"),
       degree: data.get("degree"),
       field: data.get("field") || null,
@@ -52,6 +55,7 @@ export function EducationForm({ item }: { item?: EducationModel }) {
       <p className="text-sm text-ink-muted">Fill in an institution or a degree - everything else is optional.</p>
       <Field label="Institution" name="institution" defaultValue={item?.institution} />
       <Field label="Degree" name="degree" defaultValue={item?.degree} />
+      <ImageField label="Logo" value={logo} onChange={setLogo} withAlt={false} hint="Company or school logo shown next to the entry." />
       <Field label="Field of study" name="field" defaultValue={item?.field ?? ""} />
       <div className="grid grid-cols-2 gap-4">
         <Field label="Start date" name="startDate" type="date" defaultValue={toDateInput(item?.startDate)} />

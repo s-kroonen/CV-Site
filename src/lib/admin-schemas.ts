@@ -40,6 +40,7 @@ export const experienceSchema = z
     company: optionalText(200),
     title: optionalText(200),
     location: z.string().trim().max(200).nullable().optional(),
+    logoPath: z.string().max(500).nullable().optional(),
     startDate: optionalDate,
     endDate: optionalDate,
     description: optionalText(5000),
@@ -54,6 +55,7 @@ export const educationSchema = z
     institution: optionalText(200),
     degree: optionalText(200),
     field: z.string().trim().max(200).nullable().optional(),
+    logoPath: z.string().max(500).nullable().optional(),
     startDate: optionalDate,
     endDate: optionalDate,
     description: z.string().trim().max(5000).nullable().optional(),
@@ -75,7 +77,20 @@ export const projectSchema = z.object({
   techStack: z.array(z.string().trim().min(1).max(100)).default([]),
   repoUrl: optionalUrl,
   liveUrl: optionalUrl,
-  images: z.array(z.string().max(500)).default([]),
+  images: z
+    .array(
+      z.preprocess(
+        (v) => (typeof v === "string" ? { src: v, alt: "" } : v),
+        z.object({
+          src: z.string().max(500),
+          alt: z.string().trim().max(300).default(""),
+          thumb: z.string().max(500).optional(),
+          width: z.number().int().positive().optional(),
+          height: z.number().int().positive().optional(),
+        }),
+      ),
+    )
+    .default([]),
   featured: z.boolean().default(false),
   sortIndex: z.number().int().default(0),
 });

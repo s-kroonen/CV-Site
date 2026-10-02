@@ -39,6 +39,7 @@ model Experience {
   company     String    @default("")
   title       String    @default("")
   location    String?
+  logoPath    String? // /uploads/... company or school logo
   startDate   DateTime?
   endDate     DateTime?
   description String    @default("")
@@ -58,6 +59,7 @@ model Education {
   institution String    @default("")
   degree      String    @default("")
   field       String?
+  logoPath    String? // /uploads/... company or school logo
   startDate   DateTime?
   endDate     DateTime?
   description String?

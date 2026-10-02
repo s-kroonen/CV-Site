@@ -12,7 +12,7 @@ export function Hero({ profile }: { profile: Profile }) {
         className="pointer-events-none absolute -top-32 -right-24 h-72 w-72 rounded-full opacity-40 blur-3xl sm:h-96 sm:w-96"
         style={{ background: "radial-gradient(circle, var(--accent), transparent 70%)" }}
       />
-      <HeroContent name={profile.name} tagline={profile.tagline} location={profile.location} publicEmail={profile.publicEmail} links={links} />
+      <HeroContent avatarPath={profile.avatarPath} name={profile.name} tagline={profile.tagline} location={profile.location} publicEmail={profile.publicEmail} links={links} />
     </section>
   );
 }

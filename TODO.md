@@ -4,7 +4,7 @@ Working list for the CV site. Tick items off as they land; add new ones at the b
 
 ## 0. Bugs
 
-- [ ] **"Show phone / private email" reveals nothing** (button clicks, nothing appears; the contact form's Turnstile is likely affected too). Probable cause: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is inlined at build time, and the CI/Docker build has no value for it, so `<Turnstile>` renders `null` in production. Fix by passing the site key at runtime (read it in a server component and hand it to the client component as a prop) instead of a build-time `NEXT_PUBLIC_` var. Also show a visible error/fallback when the widget can't load (blocked script, missing key) instead of silence, and verify `TURNSTILE_SECRET_KEY` + hostname allow-list in the Cloudflare widget.
+- [x] **"Show phone / private email" reveals nothing** (button clicks, nothing appears; the contact form's Turnstile is likely affected too). Probable cause: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is inlined at build time, and the CI/Docker build has no value for it, so `<Turnstile>` renders `null` in production. Fix by passing the site key at runtime (read it in a server component and hand it to the client component as a prop) instead of a build-time `NEXT_PUBLIC_` var. Also show a visible error/fallback when the widget can't load (blocked script, missing key) instead of silence, and verify `TURNSTILE_SECRET_KEY` + hostname allow-list in the Cloudflare widget.
 
 ## 1. Admin form fixes (done)
 
@@ -30,9 +30,11 @@ Working list for the CV site. Tick items off as they land; add new ones at the b
 
 ## 3. Import & media
 
-- [ ] Image upload for entities (project screenshots, company logos, profile photo) stored in `UPLOAD_DIR` volume.
-  - [ ] Validate type/size, strip EXIF, generate resized/optimised variants (next/image friendly), alt-text field.
-  - [ ] Serve through a safe route (no path traversal, correct content-type, cache headers).
+- [x] Image upload for entities (project gallery, company/school logos, profile photo) stored in `UPLOAD_DIR` volume.
+  - [x] Validate type/size, strip EXIF, resize + re-encode to WebP, thumbnail variant, alt-text field.
+  - [x] Serve through a safe route (no path traversal, correct content-type, cache headers).
+  - [x] Show images on the public site (project cards/page, header avatar, logos).
+  - [ ] Media library / orphan cleanup (files no longer referenced by anything), and deleting files when an entity is purged.
 - [ ] Import of other details for entities: bulk import from JSON/CSV (and maybe LinkedIn/GitHub export) with a preview + validation step before committing.
 - [ ] Export/backup of all content (JSON + uploads) for restore and migration between the two hosts.
 
