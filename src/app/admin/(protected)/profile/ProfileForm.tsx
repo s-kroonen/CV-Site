@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProfileModel, PrivateContactModel } from "@/generated/prisma/models";
 import { asSocialLinks } from "@/lib/json";
+import { Field, FormError, SubmitButton, TextArea, readApiError } from "@/components/admin/fields";
 
 export function ProfileForm({
   profile,
@@ -14,6 +15,7 @@ export function ProfileForm({
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const socialLinksText = profile
@@ -25,6 +27,7 @@ export function ProfileForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
+    setSaved(false);
     setError(null);
 
     const data = new FormData(event.currentTarget);
@@ -34,9 +37,16 @@ export function ProfileForm({
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line) => {
-        const [label, url] = line.split("|").map((s) => s.trim());
-        return { label, url };
+        const [label, ...rest] = line.split("|");
+        return { label: label.trim(), url: rest.join("|").trim() };
       });
+
+    const badLine = socialLinks.find((l) => !l.label || !l.url);
+    if (badLine) {
+      setSaving(false);
+      setError('Each social link needs the format "Label|https://url".');
+      return;
+    }
 
     const profilePayload = {
       name: data.get("name"),
@@ -65,99 +75,51 @@ export function ProfileForm({
       }),
     ]);
 
+    setSaving(false);
     if (!profileRes.ok || !contactRes.ok) {
-      setSaving(false);
-      setError("Could not save. Check the fields and try again.");
+      setError(await readApiError(profileRes.ok ? contactRes : profileRes));
       return;
     }
 
-    setSaving(false);
+    setSaved(true);
     router.refresh();
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Field label="Name" name="name" defaultValue={profile?.name} required />
-      <Field label="Tagline" name="tagline" defaultValue={profile?.tagline} required />
-      <TextArea label="Bio" name="bio" defaultValue={profile?.bio} required rows={6} />
-      <Field label="Public email (always visible)" name="publicEmail" defaultValue={profile?.publicEmail} required />
-      <Field label="Location" name="location" defaultValue={profile?.location} required />
+      <Field label="Tagline" name="tagline" defaultValue={profile?.tagline} />
+      <TextArea label="Bio" name="bio" defaultValue={profile?.bio} rows={6} />
+      <Field
+        label="Public email"
+        name="publicEmail"
+        type="email"
+        defaultValue={profile?.publicEmail}
+        hint="Always visible on the site. Leave blank to show only the contact form."
+      />
+      <Field label="Location" name="location" defaultValue={profile?.location} />
       <TextArea
-        label="Social links (one per line, format: Label|https://url)"
+        label="Social links"
         name="socialLinks"
         defaultValue={socialLinksText}
         rows={4}
+        hint="One per line, format: Label|https://url"
       />
 
-      <div className="mt-4 border-t border-current/10 pt-4">
-        <p className="mb-3 text-sm opacity-70">
-          Hidden from bots/scrapers - only shown to visitors who click &quot;reveal&quot; on the public page.
+      <div className="mt-4 border-t border-line pt-4">
+        <p className="mb-3 text-sm text-ink-muted">
+          Hidden from bots/scrapers - only shown to visitors who click &quot;reveal&quot; on the public page. Leave both
+          blank to hide the reveal button entirely.
         </p>
         <div className="flex flex-col gap-4">
-          <Field label="Private email" name="privateEmail" defaultValue={privateContact?.email} required />
-          <Field label="Phone" name="privatePhone" defaultValue={privateContact?.phone} required />
+          <Field label="Private email" name="privateEmail" type="email" defaultValue={privateContact?.email} />
+          <Field label="Phone" name="privatePhone" defaultValue={privateContact?.phone} />
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-fit rounded-md bg-current px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
-      >
-        {saving ? "Saving…" : "Save"}
-      </button>
+      <FormError message={error} />
+      {saved && <p className="text-sm text-ink-muted">Saved.</p>}
+      <SubmitButton pending={saving} />
     </form>
-  );
-}
-
-function Field({
-  label,
-  name,
-  defaultValue,
-  required,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | null;
-  required?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="opacity-70">{label}</span>
-      <input
-        name={name}
-        defaultValue={defaultValue ?? ""}
-        required={required}
-        className="rounded-md border border-current/20 bg-transparent px-3 py-2"
-      />
-    </label>
-  );
-}
-
-function TextArea({
-  label,
-  name,
-  defaultValue,
-  required,
-  rows = 4,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | null;
-  required?: boolean;
-  rows?: number;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="opacity-70">{label}</span>
-      <textarea
-        name={name}
-        defaultValue={defaultValue ?? ""}
-        required={required}
-        rows={rows}
-        className="rounded-md border border-current/20 bg-transparent px-3 py-2"
-      />
-    </label>
   );
 }

@@ -2,6 +2,7 @@ import type { ProfileModel as Profile } from "@/generated/prisma/models";
 import { FadeInView } from "@/components/motion/FadeInView";
 
 export function About({ profile }: { profile: Profile }) {
+  if (!profile.bio) return null;
   return (
     <FadeInView>
       <section id="about" className="flex flex-col gap-4 py-16">

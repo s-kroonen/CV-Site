@@ -18,7 +18,7 @@ export default function AdminDashboard() {
           <li key={section.href}>
             <Link
               href={section.href}
-              className="block rounded-md border border-current/15 px-4 py-3 hover:border-current/40"
+              className="block rounded-md border border-line px-4 py-3 hover:border-accent"
             >
               {section.label}
             </Link>

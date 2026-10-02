@@ -26,6 +26,7 @@ export function ExperienceSection({ items }: { items: Experience[] }) {
           {items.map((item, index) => {
             const bullets = asStringArray(item.bullets);
             const tags = asStringArray(item.tags);
+            const dateRange = formatDateRange(item.startDate, item.endDate);
             return (
               <motion.li
                 key={item.id}
@@ -36,14 +37,16 @@ export function ExperienceSection({ items }: { items: Experience[] }) {
                 transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.4) }}
               >
                 <span className="absolute top-1.5 -left-[1.65rem] h-2.5 w-2.5 rounded-full bg-accent" />
-                <p className="font-mono text-xs text-ink-muted uppercase tracking-wide">
-                  {formatDateRange(item.startDate, item.endDate)}
-                </p>
+                {dateRange && (
+                  <p className="font-mono text-xs text-ink-muted uppercase tracking-wide">{dateRange}</p>
+                )}
                 <h3 className="mt-1 text-lg font-medium">
-                  {item.title} <span className="text-ink-muted">· {item.company}</span>
+                  {item.title}
+                  {item.title && item.company && <span className="text-ink-muted"> · </span>}
+                  <span className={item.title ? "text-ink-muted" : ""}>{item.company}</span>
                 </h3>
                 {item.location && <p className="text-sm text-ink-muted">{item.location}</p>}
-                <p className="mt-2 max-w-2xl text-ink-muted">{item.description}</p>
+                {item.description && <p className="mt-2 max-w-2xl text-ink-muted">{item.description}</p>}
                 {bullets.length > 0 && (
                   <ul className="mt-2 list-disc pl-5 text-ink-muted">
                     {bullets.map((bullet, i) => (

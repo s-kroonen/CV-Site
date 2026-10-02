@@ -1,4 +1,4 @@
-import { getProfile, getExperience, getEducation, getProjects, getSkills } from "@/lib/data";
+import { getProfile, getExperience, getEducation, getProjects, getSkills, hasPrivateContact } from "@/lib/data";
 import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
@@ -12,12 +12,13 @@ import { ContactSection } from "@/components/sections/ContactSection";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [profile, experience, education, projects, skills] = await Promise.all([
+  const [profile, experience, education, projects, skills, privateContactExists] = await Promise.all([
     getProfile(),
     getExperience(),
     getEducation(),
     getProjects(),
     getSkills(),
+    hasPrivateContact(),
   ]);
 
   if (!profile) {
@@ -36,7 +37,7 @@ export default async function Home() {
       <EducationSection items={education} />
       <ProjectsSection items={projects} />
       <SkillsSection items={skills} />
-      <ContactSection publicEmail={profile.publicEmail} />
+      <ContactSection publicEmail={profile.publicEmail} hasPrivateContact={privateContactExists} />
     </main>
   );
 }

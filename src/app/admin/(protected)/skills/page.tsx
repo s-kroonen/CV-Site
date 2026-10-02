@@ -17,9 +17,9 @@ export default async function AdminSkillsPage() {
       </div>
       <ul className="flex flex-col gap-3">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between rounded-md border border-current/15 px-4 py-3">
+          <li key={item.id} className="flex items-center justify-between rounded-md border border-line px-4 py-3">
             <span>
-              {item.name} · {item.category} · {item.proficiency}%
+              {[item.name, item.category, item.proficiency != null ? `${item.proficiency}%` : ""].filter(Boolean).join(" · ")}
             </span>
             <div className="flex gap-4">
               <Link href={`/admin/skills/${item.id}`} className="text-sm underline underline-offset-4">

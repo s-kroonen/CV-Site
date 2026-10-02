@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { educationSchema } from "@/lib/admin-schemas";
+import { educationSchema, formatZodError } from "@/lib/admin-schemas";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const json = await request.json().catch(() => null);
   const parsed = educationSchema.safeParse(json);
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 400 });
+    return Response.json({ error: formatZodError(parsed.error) }, { status: 400 });
   }
 
   const { startDate, endDate, ...rest } = parsed.data;
@@ -14,7 +14,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     where: { id },
     data: {
       ...rest,
-      startDate: new Date(startDate),
+      startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null,
     },
   });

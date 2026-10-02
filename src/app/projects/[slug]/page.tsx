@@ -26,7 +26,7 @@ export default async function ProjectPage({
             ← Back to projects
           </Link>
           <h1 className="font-[family-name:var(--font-display)] text-4xl font-medium">{project.title}</h1>
-          <p className="text-ink-muted">{project.summary}</p>
+          {project.summary && <p className="text-ink-muted">{project.summary}</p>}
           {tech.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {tech.map((t) => (
@@ -36,7 +36,7 @@ export default async function ProjectPage({
               ))}
             </div>
           )}
-          <p className="max-w-2xl whitespace-pre-wrap text-ink-muted">{project.description}</p>
+          {project.description && <p className="max-w-2xl whitespace-pre-wrap text-ink-muted">{project.description}</p>}
           <div className="flex gap-4 text-sm">
             {project.repoUrl && (
               <a

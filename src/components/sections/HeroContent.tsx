@@ -25,22 +25,28 @@ export function HeroContent({
 
   return (
     <div className="relative flex flex-col gap-4">
-      <motion.p {...item(0)} className="font-mono text-xs tracking-[0.2em] text-ink-muted uppercase">
-        {location}
-      </motion.p>
+      {location && (
+        <motion.p {...item(0)} className="font-mono text-xs tracking-[0.2em] text-ink-muted uppercase">
+          {location}
+        </motion.p>
+      )}
       <motion.h1
         {...item(0.08)}
         className="font-[family-name:var(--font-display)] text-6xl leading-[0.95] font-medium tracking-tight sm:text-7xl"
       >
         {name}
       </motion.h1>
-      <motion.p {...item(0.16)} className="max-w-xl text-lg text-ink-muted">
-        {tagline}
-      </motion.p>
+      {tagline && (
+        <motion.p {...item(0.16)} className="max-w-xl text-lg text-ink-muted">
+          {tagline}
+        </motion.p>
+      )}
       <motion.div {...item(0.24)} className="mt-4 flex flex-wrap items-center gap-5 text-sm">
-        <a href={`mailto:${publicEmail}`} className="text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent">
-          {publicEmail}
-        </a>
+        {publicEmail && (
+          <a href={`mailto:${publicEmail}`} className="text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent">
+            {publicEmail}
+          </a>
+        )}
         {links.map((link) => (
           <a
             key={link.url}

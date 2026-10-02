@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SkillModel } from "@/generated/prisma/models";
+import { Field, FormError, SubmitButton, TagInput, readApiError } from "@/components/admin/fields";
 
 export function SkillForm({ item }: { item?: SkillModel }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [category, setCategory] = useState<string[]>(item?.category ? [item.category] : []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -15,10 +17,11 @@ export function SkillForm({ item }: { item?: SkillModel }) {
     setError(null);
 
     const data = new FormData(event.currentTarget);
+    const proficiency = String(data.get("proficiency") ?? "").trim();
     const payload = {
       name: data.get("name"),
-      category: data.get("category"),
-      proficiency: Number(data.get("proficiency")),
+      category: category[0] ?? "",
+      proficiency: proficiency === "" ? null : Number(proficiency),
       sortIndex: Number(data.get("sortIndex") ?? 0),
     };
 
@@ -30,7 +33,7 @@ export function SkillForm({ item }: { item?: SkillModel }) {
 
     if (!res.ok) {
       setSaving(false);
-      setError("Could not save. Check the fields and try again.");
+      setError(await readApiError(res));
       return;
     }
 
@@ -41,44 +44,31 @@ export function SkillForm({ item }: { item?: SkillModel }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Field label="Name" name="name" defaultValue={item?.name} required />
-      <Field label="Category" name="category" defaultValue={item?.category} required />
-      <Field label="Proficiency (0-100)" name="proficiency" type="number" defaultValue={item?.proficiency ?? 50} required />
-      <Field label="Sort index" name="sortIndex" type="number" defaultValue={item?.sortIndex ?? 0} />
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-fit rounded-md bg-current px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
-      >
-        {saving ? "Saving…" : "Save"}
-      </button>
-    </form>
-  );
-}
-
-function Field({
-  label,
-  name,
-  defaultValue,
-  type = "text",
-  required,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | number | null;
-  type?: string;
-  required?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="opacity-70">{label}</span>
-      <input
-        name={name}
-        type={type}
-        defaultValue={defaultValue ?? ""}
-        required={required}
-        className="rounded-md border border-current/20 bg-transparent px-3 py-2"
+      <TagInput
+        label="Category"
+        value={category}
+        onChange={setCategory}
+        pool="categories"
+        single
+        placeholder="e.g. Languages - type to search or add…"
+        hint="Skills with the same category are grouped together. Blank = grouped under Other."
       />
-    </label>
+      <Field
+        label="Proficiency (0-100)"
+        name="proficiency"
+        type="number"
+        defaultValue={item?.proficiency}
+        hint="Leave blank to show the skill without a level bar."
+      />
+      <Field
+        label="Sort index"
+        name="sortIndex"
+        type="number"
+        defaultValue={item?.sortIndex ?? 0}
+        hint="Lower numbers appear first."
+      />
+      <FormError message={error} />
+      <SubmitButton pending={saving} />
+    </form>
   );
 }

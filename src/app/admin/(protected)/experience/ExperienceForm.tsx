@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ExperienceModel } from "@/generated/prisma/models";
+import { asStringArray } from "@/lib/json";
+import { Field, FormError, SubmitButton, TagInput, TextArea, readApiError } from "@/components/admin/fields";
 
 function toDateInput(d: Date | string | null | undefined): string {
   if (!d) return "";
@@ -13,6 +15,7 @@ export function ExperienceForm({ item }: { item?: ExperienceModel }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [tags, setTags] = useState<string[]>(item ? asStringArray(item.tags) : []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,16 +27,12 @@ export function ExperienceForm({ item }: { item?: ExperienceModel }) {
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
-    const tags = String(data.get("tags") ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
 
     const payload = {
       company: data.get("company"),
       title: data.get("title"),
       location: data.get("location") || null,
-      startDate: data.get("startDate"),
+      startDate: data.get("startDate") || null,
       endDate: data.get("endDate") || null,
       description: data.get("description"),
       bullets,
@@ -49,7 +48,7 @@ export function ExperienceForm({ item }: { item?: ExperienceModel }) {
 
     if (!res.ok) {
       setSaving(false);
-      setError("Could not save. Check the fields and try again.");
+      setError(await readApiError(res));
       return;
     }
 
@@ -59,81 +58,37 @@ export function ExperienceForm({ item }: { item?: ExperienceModel }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Field label="Company" name="company" defaultValue={item?.company} required />
-      <Field label="Title" name="title" defaultValue={item?.title} required />
+      <p className="text-sm text-ink-muted">Fill in a job title or a company - everything else is optional.</p>
+      <Field label="Job title" name="title" defaultValue={item?.title} />
+      <Field label="Company" name="company" defaultValue={item?.company} />
       <Field label="Location" name="location" defaultValue={item?.location ?? ""} />
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Start date" name="startDate" type="date" defaultValue={toDateInput(item?.startDate)} required />
-        <Field label="End date (blank = present)" name="endDate" type="date" defaultValue={toDateInput(item?.endDate)} />
+        <Field label="Start date" name="startDate" type="date" defaultValue={toDateInput(item?.startDate)} />
+        <Field
+          label="End date"
+          name="endDate"
+          type="date"
+          defaultValue={toDateInput(item?.endDate)}
+          hint="Leave blank if this is your current role."
+        />
       </div>
-      <TextArea label="Description" name="description" defaultValue={item?.description} required />
+      <TextArea label="Description" name="description" defaultValue={item?.description} />
       <TextArea
-        label="Bullet points (one per line)"
+        label="Bullet points"
         name="bullets"
-        defaultValue={item ? (item.bullets as string[]).join("\n") : ""}
+        defaultValue={item ? asStringArray(item.bullets).join("\n") : ""}
+        hint="One per line."
       />
-      <Field label="Tags (comma-separated)" name="tags" defaultValue={item ? (item.tags as string[]).join(", ") : ""} />
-      <Field label="Sort index" name="sortIndex" type="number" defaultValue={item?.sortIndex ?? 0} />
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-fit rounded-md bg-current px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
-      >
-        {saving ? "Saving…" : "Save"}
-      </button>
+      <TagInput label="Tags" value={tags} onChange={setTags} hint="Technologies, skills or keywords. Pick an existing one to avoid typos." />
+      <Field
+        label="Sort index"
+        name="sortIndex"
+        type="number"
+        defaultValue={item?.sortIndex ?? 0}
+        hint="Lower numbers appear first."
+      />
+      <FormError message={error} />
+      <SubmitButton pending={saving} />
     </form>
-  );
-}
-
-function Field({
-  label,
-  name,
-  defaultValue,
-  type = "text",
-  required,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | number | null;
-  type?: string;
-  required?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="opacity-70">{label}</span>
-      <input
-        name={name}
-        type={type}
-        defaultValue={defaultValue ?? ""}
-        required={required}
-        className="rounded-md border border-current/20 bg-transparent px-3 py-2"
-      />
-    </label>
-  );
-}
-
-function TextArea({
-  label,
-  name,
-  defaultValue,
-  required,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | null;
-  required?: boolean;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="opacity-70">{label}</span>
-      <textarea
-        name={name}
-        defaultValue={defaultValue ?? ""}
-        required={required}
-        rows={4}
-        className="rounded-md border border-current/20 bg-transparent px-3 py-2"
-      />
-    </label>
   );
 }

@@ -14,10 +14,10 @@ datasource db {
 model Profile {
   id          Int      @id @default(1)
   name        String
-  tagline     String
-  bio         String
-  publicEmail String
-  location    String
+  tagline     String   @default("")
+  bio         String   @default("")
+  publicEmail String   @default("")
+  location    String   @default("")
   socialLinks Json // [{ label: string, url: string }]
   avatarPath  String?
   resumePath  String?
@@ -29,19 +29,19 @@ model Profile {
 // select it just by selecting "everything" on Profile.
 model PrivateContact {
   id        Int      @id @default(1)
-  email     String
-  phone     String
+  email     String   @default("")
+  phone     String   @default("")
   updatedAt DateTime @updatedAt
 }
 
 model Experience {
   id          String    @id @default(cuid())
-  company     String
-  title       String
+  company     String    @default("")
+  title       String    @default("")
   location    String?
-  startDate   DateTime
+  startDate   DateTime?
   endDate     DateTime?
-  description String
+  description String    @default("")
   bullets     Json // string[]
   tags        Json // string[]
   sortIndex   Int       @default(0)
@@ -53,10 +53,10 @@ model Experience {
 
 model Education {
   id          String    @id @default(cuid())
-  institution String
-  degree      String
+  institution String    @default("")
+  degree      String    @default("")
   field       String?
-  startDate   DateTime
+  startDate   DateTime?
   endDate     DateTime?
   description String?
   sortIndex   Int       @default(0)
@@ -70,8 +70,8 @@ model Project {
   id          String   @id @default(cuid())
   title       String
   slug        String   @unique
-  summary     String
-  description String
+  summary     String   @default("")
+  description String   @default("")
   techStack   Json // string[]
   repoUrl     String?
   liveUrl     String?
@@ -88,8 +88,8 @@ model Project {
 model Skill {
   id          String   @id @default(cuid())
   name        String
-  category    String
-  proficiency Int // 0-100
+  category    String   @default("")
+  proficiency Int? // 0-100, null = don't show a level
   sortIndex   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

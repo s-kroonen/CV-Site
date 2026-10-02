@@ -29,7 +29,7 @@ export function RevealContactInfo() {
   if (state === "revealed" && info) {
     return (
       <p className="text-sm text-ink-muted">
-        {info.email} · {info.phone}
+        {[info.email, info.phone].filter(Boolean).join(" · ")}
       </p>
     );
   }

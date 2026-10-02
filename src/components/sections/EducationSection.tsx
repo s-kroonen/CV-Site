@@ -12,14 +12,15 @@ export function EducationSection({ items }: { items: Education[] }) {
         <ul className="flex flex-col gap-6">
           {items.map((item) => (
             <li key={item.id}>
-              <p className="font-mono text-xs text-ink-muted uppercase tracking-wide">
-                {formatDateRange(item.startDate, item.endDate)}
-              </p>
-              <h3 className="mt-1 text-lg font-medium">{item.degree}</h3>
-              <p className="text-ink-muted">
-                {item.institution}
-                {item.field ? ` · ${item.field}` : ""}
-              </p>
+              {formatDateRange(item.startDate, item.endDate) && (
+                <p className="font-mono text-xs text-ink-muted uppercase tracking-wide">
+                  {formatDateRange(item.startDate, item.endDate)}
+                </p>
+              )}
+              <h3 className="mt-1 text-lg font-medium">{item.degree || item.institution}</h3>
+              {(item.degree ? item.institution : "") || item.field ? (
+                <p className="text-ink-muted">{[item.degree ? item.institution : "", item.field].filter(Boolean).join(" · ")}</p>
+              ) : null}
               {item.description && <p className="mt-1 max-w-2xl text-ink-muted">{item.description}</p>}
             </li>
           ))}

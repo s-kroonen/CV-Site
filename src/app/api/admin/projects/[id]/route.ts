@@ -1,21 +1,24 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { projectSchema } from "@/lib/admin-schemas";
+import { projectSchema, formatZodError } from "@/lib/admin-schemas";
+import { slugify, uniqueProjectSlug } from "@/lib/slug";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const json = await request.json().catch(() => null);
   const parsed = projectSchema.safeParse(json);
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 400 });
+    return Response.json({ error: formatZodError(parsed.error) }, { status: 400 });
   }
 
-  const { repoUrl, liveUrl, ...rest } = parsed.data;
+  const { repoUrl, liveUrl, slug, ...rest } = parsed.data;
+  // Blank slug -> derived from the title; an explicit one is kept as typed (collision -> 409 below).
+  const finalSlug = slug || (await uniqueProjectSlug(slugify(rest.title), id));
 
   try {
     const updated = await prisma.project.update({
       where: { id },
-      data: { ...rest, repoUrl: repoUrl || null, liveUrl: liveUrl || null },
+      data: { ...rest, slug: finalSlug, repoUrl: repoUrl || null, liveUrl: liveUrl || null },
     });
     return Response.json(updated);
   } catch (err) {

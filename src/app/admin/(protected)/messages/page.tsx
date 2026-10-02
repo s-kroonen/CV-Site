@@ -14,7 +14,7 @@ export default async function AdminMessagesPage() {
         {messages.map((message) => (
           <li
             key={message.id}
-            className={`rounded-md border px-4 py-3 ${message.read ? "border-current/10 opacity-70" : "border-current/30"}`}
+            className={`rounded-md border px-4 py-3 ${message.read ? "border-line opacity-70" : "border-line"}`}
           >
             <div className="flex items-center justify-between">
               <span className="font-medium">

@@ -47,16 +47,16 @@ export function CvDocument({
     <Document title={`${profile.name} - CV`}>
       <Page size="A4" style={styles.page}>
         <Text style={styles.name}>{profile.name}</Text>
-        <Text style={styles.tagline}>{profile.tagline}</Text>
+        {profile.tagline ? <Text style={styles.tagline}>{profile.tagline}</Text> : null}
         <View style={styles.contactRow}>
-          <Text>{profile.publicEmail}</Text>
-          <Text>{profile.location}</Text>
+          {profile.publicEmail ? <Text>{profile.publicEmail}</Text> : null}
+          {profile.location ? <Text>{profile.location}</Text> : null}
           {links.map((link) => (
             <Text key={link.url}>{link.url}</Text>
           ))}
         </View>
 
-        <Text style={{ marginBottom: 12 }}>{profile.bio}</Text>
+        {profile.bio ? <Text style={{ marginBottom: 12 }}>{profile.bio}</Text> : null}
 
         {experience.length > 0 && (
           <View>
@@ -64,12 +64,10 @@ export function CvDocument({
             {experience.map((item) => (
               <View key={item.id} style={styles.entry} wrap={false}>
                 <View style={styles.entryTitleRow}>
-                  <Text style={styles.entryTitle}>
-                    {item.title} · {item.company}
-                  </Text>
+                  <Text style={styles.entryTitle}>{[item.title, item.company].filter(Boolean).join(" · ")}</Text>
                   <Text style={styles.entryMeta}>{formatDateRange(item.startDate, item.endDate)}</Text>
                 </View>
-                <Text>{item.description}</Text>
+                {item.description ? <Text>{item.description}</Text> : null}
                 {asStringArray(item.bullets).map((bullet, i) => (
                   <Text key={i} style={styles.bullet}>
                     • {bullet}
@@ -86,13 +84,12 @@ export function CvDocument({
             {education.map((item) => (
               <View key={item.id} style={styles.entry} wrap={false}>
                 <View style={styles.entryTitleRow}>
-                  <Text style={styles.entryTitle}>{item.degree}</Text>
+                  <Text style={styles.entryTitle}>{item.degree || item.institution}</Text>
                   <Text style={styles.entryMeta}>{formatDateRange(item.startDate, item.endDate)}</Text>
                 </View>
-                <Text>
-                  {item.institution}
-                  {item.field ? ` · ${item.field}` : ""}
-                </Text>
+                {(item.degree ? item.institution : "") || item.field ? (
+                  <Text>{[item.degree ? item.institution : "", item.field].filter(Boolean).join(" · ")}</Text>
+                ) : null}
               </View>
             ))}
           </View>

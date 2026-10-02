@@ -17,7 +17,7 @@ export default async function AdminProjectsPage() {
       </div>
       <ul className="flex flex-col gap-3">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between rounded-md border border-current/15 px-4 py-3">
+          <li key={item.id} className="flex items-center justify-between rounded-md border border-line px-4 py-3">
             <span>
               {item.title} {item.status === "archived" && <em className="opacity-50">(archived)</em>}
             </span>

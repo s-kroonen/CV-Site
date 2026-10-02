@@ -17,15 +17,15 @@ export default async function AdminEducationPage() {
       </div>
       <ul className="flex flex-col gap-3">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between rounded-md border border-current/15 px-4 py-3">
+          <li key={item.id} className="flex items-center justify-between rounded-md border border-line px-4 py-3">
             <span>
-              {item.degree} · {item.institution}
+              {[item.degree, item.institution].filter(Boolean).join(" · ")}
             </span>
             <div className="flex gap-4">
               <Link href={`/admin/education/${item.id}`} className="text-sm underline underline-offset-4">
                 Edit
               </Link>
-              <DeleteButton endpoint={`/api/admin/education/${item.id}`} confirmText={`Delete "${item.degree}"?`} />
+              <DeleteButton endpoint={`/api/admin/education/${item.id}`} confirmText={`Delete "${item.degree || item.institution}"?`} />
             </div>
           </li>
         ))}

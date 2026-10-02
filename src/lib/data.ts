@@ -29,3 +29,13 @@ export function getProjectBySlug(slug: string) {
 export function getSkills() {
   return prisma.skill.findMany({ orderBy: [{ category: "asc" }, { sortIndex: "asc" }] });
 }
+
+/**
+ * Whether any private contact detail exists (so the public page knows whether
+ * to render the reveal button). Returns only a boolean - the values themselves
+ * stay behind the Turnstile-gated /api/contact-info route.
+ */
+export async function hasPrivateContact(): Promise<boolean> {
+  const contact = await prisma.privateContact.findUnique({ where: { id: 1 }, select: { email: true, phone: true } });
+  return Boolean(contact && (contact.email || contact.phone));
+}

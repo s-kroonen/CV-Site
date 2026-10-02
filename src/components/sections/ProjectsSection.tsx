@@ -74,7 +74,7 @@ export function ProjectsSection({ items }: { items: Project[] }) {
                     className="flex h-full flex-col gap-2 rounded-lg border border-line p-5 shadow-sm transition-shadow hover:shadow-md"
                   >
                     <h3 className="text-lg font-medium">{project.title}</h3>
-                    <p className="text-ink-muted">{project.summary}</p>
+                    {project.summary && <p className="text-ink-muted">{project.summary}</p>}
                     {tech.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {tech.map((t) => (

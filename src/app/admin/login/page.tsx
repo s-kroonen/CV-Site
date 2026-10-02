@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
       <button
         onClick={handleLogin}
         disabled={status === "working"}
-        className="rounded-md bg-current px-4 py-2 text-sm font-medium text-background disabled:opacity-50"
+        className="rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         {status === "working" ? "Waiting for passkey…" : "Sign in with passkey"}
       </button>
