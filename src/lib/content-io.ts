@@ -3,7 +3,14 @@ import path from "node:path";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { asImages, asSocialLinks, asStringArray } from "@/lib/json";
+import { asImages } from "@/lib/json";
+import {
+  serializeEducation,
+  serializeExperience,
+  serializeProfile,
+  serializeProject,
+  serializeSkill,
+} from "@/lib/content-service";
 import {
   educationSchema,
   experienceSchema,
@@ -35,8 +42,6 @@ export type ExportDoc = {
   skills: Row[];
 };
 
-const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
-
 // ---------------------------------------------------------------- export
 
 export async function buildExport(includePrivate: boolean): Promise<ExportDoc> {
@@ -49,69 +54,15 @@ export async function buildExport(includePrivate: boolean): Promise<ExportDoc> {
     prisma.skill.findMany({ orderBy: { sortIndex: "asc" } }),
   ]);
 
-  const life = (r: { archivedAt: Date | null; deletedAt: Date | null }) => ({
-    archivedAt: iso(r.archivedAt),
-    deletedAt: iso(r.deletedAt),
-  });
-
   return {
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    profile: profile && {
-      name: profile.name,
-      tagline: profile.tagline,
-      bio: profile.bio,
-      publicEmail: profile.publicEmail,
-      location: profile.location,
-      socialLinks: asSocialLinks(profile.socialLinks),
-      avatarPath: profile.avatarPath,
-      resumePath: profile.resumePath,
-    },
+    profile: profile && serializeProfile(profile),
     privateContact: privateContact && { email: privateContact.email, phone: privateContact.phone },
-    experience: experience.map((r) => ({
-      company: r.company,
-      title: r.title,
-      location: r.location,
-      logoPath: r.logoPath,
-      startDate: iso(r.startDate),
-      endDate: iso(r.endDate),
-      description: r.description,
-      bullets: asStringArray(r.bullets),
-      tags: asStringArray(r.tags),
-      sortIndex: r.sortIndex,
-      ...life(r),
-    })),
-    education: education.map((r) => ({
-      institution: r.institution,
-      degree: r.degree,
-      field: r.field,
-      logoPath: r.logoPath,
-      startDate: iso(r.startDate),
-      endDate: iso(r.endDate),
-      description: r.description,
-      sortIndex: r.sortIndex,
-      ...life(r),
-    })),
-    projects: projects.map((r) => ({
-      title: r.title,
-      slug: r.slug,
-      summary: r.summary,
-      description: r.description,
-      techStack: asStringArray(r.techStack),
-      repoUrl: r.repoUrl,
-      liveUrl: r.liveUrl,
-      images: asImages(r.images),
-      featured: r.featured,
-      sortIndex: r.sortIndex,
-      ...life(r),
-    })),
-    skills: skills.map((r) => ({
-      name: r.name,
-      category: r.category,
-      proficiency: r.proficiency,
-      sortIndex: r.sortIndex,
-      ...life(r),
-    })),
+    experience: experience.map((r) => serializeExperience(r)),
+    education: education.map((r) => serializeEducation(r)),
+    projects: projects.map((r) => serializeProject(r)),
+    skills: skills.map((r) => serializeSkill(r)),
   };
 }
 

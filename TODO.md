@@ -43,14 +43,16 @@ Working list for the CV site. Tick items off as they land; add new ones at the b
 
 An AI tool must be able to **add, edit and remove** entities (and archive/restore, using the trash/archive from section 2).
 
-- [ ] Decide transport and hosting: Streamable HTTP MCP endpoint in the Next.js app (e.g. `/api/mcp`) vs. separate small service.
-- [ ] Auth: scoped API tokens managed from admin (create/revoke, hashed at rest, per-token scopes e.g. read-only vs. write, expiry, last-used). Passkey admin session is not usable by a headless client.
-- [ ] Tools: `list_*`, `get_*`, `create_*`, `update_*`, `archive_*`, `restore_*`, `delete_*` (to trash) for profile, experience, education, projects, skills, tags; media upload/attach; search tags.
-- [ ] Reuse the same validation/service layer as the admin forms so there is one code path.
-- [ ] Dry-run / confirmation for destructive actions; audit log of every MCP change (who/token, what, when) with undo via trash.
-- [ ] Rate limiting + input size limits; never expose private contact fields (email/phone) unless explicitly scoped.
-- [ ] Docs: how to connect (Claude Desktop/Code config snippet) in `docs/`.
-- [ ] Tests for tools, auth failures and scope enforcement.
+- [x] Decide transport and hosting: Streamable HTTP MCP endpoint in the Next.js app (e.g. `/api/mcp`) vs. separate small service.
+- [x] Auth: scoped API tokens managed from admin (create/revoke, hashed at rest, per-token scopes e.g. read-only vs. write, expiry, last-used). Passkey admin session is not usable by a headless client.
+- [x] Tools: `list_*`, `get_*`, `create_*`, `update_*`, `archive_*`, `restore_*`, `delete_*` (to trash) for profile, experience, education, projects, skills, tags; media upload/attach; search tags.
+- [x] Reuse the same validation/service layer as the admin forms so there is one code path.
+- [x] Audit log of every MCP change (token, tool, item, when) shown in admin; "delete" only moves to trash (undo = restore), permanent delete stays admin-only.
+- [x] Rate limiting + input size limits; never expose private contact fields (email/phone) unless explicitly scoped.
+- [x] Docs: how to connect (Claude Desktop/Code config snippet) in `docs/`.
+- [x] Tested: scopes, auth/expiry/revoke, origin check, validation errors, lifecycle, image upload, and an end-to-end run with the official MCP SDK client.
+  - [ ] Add these as automated tests (vitest) so they run in CI.
+- [x] OAuth 2.1 sign-in for the MCP endpoint (discovery, dynamic client registration, PKCE, refresh rotation, consent with admin passkey) so claude.ai custom connectors and Claude Desktop can connect; connected apps are listed/revocable in admin. Tested end to end with the official MCP SDK client.
 
 ## 5. Visual design / layout
 

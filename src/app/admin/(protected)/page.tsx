@@ -7,6 +7,7 @@ const sections = [
   { href: "/admin/projects", label: "Projects" },
   { href: "/admin/skills", label: "Skills" },
   { href: "/admin/data", label: "Import & export" },
+  { href: "/admin/tokens", label: "AI access (MCP)" },
   { href: "/admin/messages", label: "Contact messages" },
 ];
 

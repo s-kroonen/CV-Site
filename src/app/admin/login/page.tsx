@@ -33,7 +33,9 @@ export default function AdminLoginPage() {
         throw new Error(body?.error ?? "Login failed.");
       }
 
-      router.push("/admin");
+      // Come back to e.g. the OAuth consent page if that is where we were sent from.
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next && next.startsWith("/oauth/authorize") ? next : "/admin");
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Login failed.");

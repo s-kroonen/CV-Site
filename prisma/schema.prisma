@@ -127,3 +127,72 @@ model AdminPasskey {
   transports   Json? // string[]
   createdAt    DateTime @default(now())
 }
+
+// Bearer tokens for the MCP endpoint (/api/mcp). Only a SHA-256 of the token
+// is stored; the plaintext is shown once at creation.
+model ApiToken {
+  id         String    @id @default(cuid())
+  name       String
+  tokenHash  String    @unique
+  prefix     String // first characters, to recognise a token in the list
+  scopes     Json // ("read" | "write" | "private")[]
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  grantId    String? // set for access tokens issued through OAuth
+}
+
+// What MCP clients did (one row per tool call).
+model AuditLog {
+  id        String   @id @default(cuid())
+  at        DateTime @default(now())
+  actor     String // token name
+  tool      String
+  entity    String?
+  entityId  String?
+  ok        Boolean
+  detail    String? // error message or short summary
+  tokenId   String?
+
+  @@index([at])
+}
+
+// ---- OAuth 2.1 for the MCP endpoint (lets claude.ai / Claude Desktop connect
+// without a hand-pasted token). See src/lib/oauth.ts.
+
+// Dynamically registered public clients (RFC 7591).
+model OAuthClient {
+  id           String   @id @default(cuid())
+  clientId     String   @unique
+  name         String
+  redirectUris Json // string[]
+  createdAt    DateTime @default(now())
+}
+
+// Short-lived, single-use authorization codes (stored hashed).
+model OAuthCode {
+  id            String    @id @default(cuid())
+  codeHash      String    @unique
+  clientId      String
+  redirectUri   String
+  codeChallenge String
+  scopes        Json
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+// One approved connection of an app. Access tokens are ApiToken rows with grantId set.
+model OAuthGrant {
+  id              String    @id @default(cuid())
+  clientId        String
+  clientName      String
+  scopes          Json
+  refreshHash     String    @unique
+  prevRefreshHash String? // reuse of this = stolen refresh token -> revoke the grant
+  expiresAt       DateTime
+  lastUsedAt      DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+}
