@@ -14,6 +14,6 @@ if [ -n "$UPLOAD_DIR" ]; then
   chown -R nextjs:nodejs "$UPLOAD_DIR"
 fi
 
-su-exec nextjs npx prisma migrate deploy
+su-exec nextjs node node_modules/prisma/build/index.js migrate deploy
 
 exec su-exec nextjs "$@"
