@@ -8,6 +8,9 @@
   --accent: #b3502a;
   --accent-ink: #fdf7ee;
   --line: #21201a1f;
+  --accent-2: #c98a2b; /* ochre, second glow colour */
+  --grain: 0.07;
+  --glow: 0.24;
   color-scheme: light;
 }
 
@@ -23,6 +26,9 @@
     --accent: #e07a4c;
     --accent-ink: #1c1310;
     --line: #f2ece11f;
+    --accent-2: #d79a3c;
+    --grain: 0.09;
+    --glow: 0.3;
   }
 }
 
@@ -34,6 +40,9 @@
   --accent: #e07a4c;
   --accent-ink: #1c1310;
   --line: #f2ece11f;
+  --accent-2: #d79a3c;
+  --grain: 0.09;
+  --glow: 0.3;
 }
 
 @theme inline {
@@ -62,4 +71,19 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---- Page backdrop (components/site/Backdrop.tsx) ---- */
+.backdrop-grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: var(--grain);
+}
+
+.backdrop-grid {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 10%, transparent 75%);
+  opacity: 0.55;
 }

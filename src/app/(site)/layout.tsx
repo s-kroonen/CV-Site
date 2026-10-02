@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getNavTabs, getProfile } from "@/lib/data";
+import { Backdrop } from "@/components/site/Backdrop";
 import { SiteHeader } from "@/components/site/SiteHeader";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <>
+      <Backdrop />
       <SiteHeader name={profile?.name ?? ""} avatarPath={profile?.avatarPath} tabs={tabs} />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6">{children}</main>
       <footer className="border-t border-line py-8 text-center text-xs text-ink-muted">

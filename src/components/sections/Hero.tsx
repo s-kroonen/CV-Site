@@ -7,11 +7,6 @@ export function Hero({ profile }: { profile: Profile }) {
 
   return (
     <section id="top" className="relative flex flex-col gap-4 overflow-hidden py-16 sm:py-24">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-32 -right-24 h-72 w-72 rounded-full opacity-40 blur-3xl sm:h-96 sm:w-96"
-        style={{ background: "radial-gradient(circle, var(--accent), transparent 70%)" }}
-      />
       <HeroContent avatarPath={profile.avatarPath} name={profile.name} tagline={profile.tagline} location={profile.location} publicEmail={profile.publicEmail} links={links} />
     </section>
   );

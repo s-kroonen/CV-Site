@@ -58,9 +58,9 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 - [ ] Profile-style details borrowed from LinkedIn/blog layouts, kept simple: profile header with avatar, headline, location and quick links; skill chips; experience as a clean timeline with company logos; featured projects; "last updated" note.
 - [ ] Small UI polish pass: spacing, typography scale, consistent buttons and cards, focus states, hover/scroll animations kept subtle.
 
-- [ ] Background is bland: keep the current colour palette but add depth (layered gradients/mesh, subtle grain/noise, soft glows, section-aware backgrounds, parallax or scroll-linked movement).
-- [ ] Respect `prefers-reduced-motion` and keep contrast/readability; check performance on low-end devices.
-- [ ] Verify in light/dark and mobile widths.
+- [x] Background: same palette with depth - drifting accent/ochre glows per tab with scroll parallax, faint grid, film grain (`components/site/Backdrop.tsx`).
+- [x] Respects `prefers-reduced-motion` (static); checked light and dark.
+- [ ] Check performance on low-end devices / mobile Safari (fixed layer + large gradients).
 
 ## 6. Findability / SEO / AI discoverability
 
