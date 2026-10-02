@@ -4,16 +4,29 @@ import { motion, useReducedMotion } from "framer-motion";
 import { asStringArray } from "@/lib/json";
 import { formatDateRange } from "@/lib/format";
 import type { ExperienceModel as Experience } from "@/generated/prisma/models";
+import { SectionHeading } from "@/components/site/SectionHeading";
 import { FadeInView } from "@/components/motion/FadeInView";
 
-export function ExperienceSection({ items }: { items: Experience[] }) {
+export function ExperienceSection({
+  items: allItems,
+  asPage = false,
+  limit,
+  moreHref,
+}: {
+  items: Experience[];
+  asPage?: boolean;
+  limit?: number;
+  moreHref?: string;
+}) {
   const reduceMotion = useReducedMotion();
-  if (items.length === 0) return null;
+  if (allItems.length === 0) return null;
+  const items = limit ? allItems.slice(0, limit) : allItems;
+  const hasMore = allItems.length > items.length;
 
   return (
     <FadeInView>
       <section id="experience" className="flex flex-col gap-8 py-16">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl font-medium">Experience</h2>
+        <SectionHeading title="Experience" asPage={asPage} moreHref={hasMore ? moreHref : undefined} />
         <ol className="relative flex flex-col gap-10 pl-6">
           <motion.div
             aria-hidden="true"

@@ -20,10 +20,10 @@ export default async function ProjectPage({
   const images = asImages(project.images);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
+    <div className="flex w-full flex-1 flex-col gap-6 py-16">
       <FadeInView>
         <div className="flex flex-col gap-6">
-          <Link href="/#projects" className="w-fit text-sm text-ink-muted underline underline-offset-4 hover:text-ink">
+          <Link href="/projects" className="w-fit text-sm text-ink-muted underline underline-offset-4 hover:text-ink">
             ← Back to projects
           </Link>
           <h1 className="font-[family-name:var(--font-display)] text-4xl font-medium">{project.title}</h1>
@@ -78,6 +78,6 @@ export default async function ProjectPage({
           </div>
         </div>
       </FadeInView>
-    </main>
+    </div>
   );
 }

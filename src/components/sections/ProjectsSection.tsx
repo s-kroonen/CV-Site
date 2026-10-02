@@ -5,9 +5,22 @@ import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { asImages, asStringArray } from "@/lib/json";
 import type { ProjectModel as Project } from "@/generated/prisma/models";
+import { SectionHeading } from "@/components/site/SectionHeading";
 import { FadeInView } from "@/components/motion/FadeInView";
 
-export function ProjectsSection({ items }: { items: Project[] }) {
+export function ProjectsSection({
+  items: allItems,
+  asPage = false,
+  limit,
+  moreHref,
+}: {
+  items: Project[];
+  asPage?: boolean;
+  limit?: number;
+  moreHref?: string;
+}) {
+  const items = limit ? allItems.slice(0, limit) : allItems;
+  const hasMore = allItems.length > items.length;
   const reduceMotion = useReducedMotion();
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
@@ -29,8 +42,8 @@ export function ProjectsSection({ items }: { items: Project[] }) {
     <FadeInView>
       <section id="projects" className="flex flex-col gap-8 py-16">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-medium">Projects</h2>
-          {allTags.length > 1 && (
+          <SectionHeading title="Projects" asPage={asPage} moreHref={hasMore ? moreHref : undefined} />
+          {!limit && allTags.length > 1 && (
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setActiveTag(null)}

@@ -53,8 +53,8 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 
 ## 5. Visual design / layout
 
-- [ ] **Tabbed page layout** (modelled on CV/personal sites like a simple LinkedIn profile or personal blog, but lighter and more personal): replace the single long scroll with tabs/pages - a default **Overview/Home** (hero, short about, highlights), plus **Experience**, **Projects**, **Skills**, **Education**, **Contact** (own URLs such as `/experience`, `/contact` so each is linkable and indexable). Sticky top nav with the active tab highlighted; keep it usable on mobile (scrollable tab bar or menu).
-- [ ] **Light mode**: proper light theme (currently only follows the OS) with a manual light/dark toggle in the nav, remembered per visitor; keep the existing colour palette in both. Audit contrast.
+- [x] **Tabbed page layout** (modelled on CV/personal sites like a simple LinkedIn profile or personal blog, but lighter and more personal): replace the single long scroll with tabs/pages - a default **Overview/Home** (hero, short about, highlights), plus **Experience**, **Projects**, **Skills**, **Education**, **Contact** (own URLs such as `/experience`, `/contact` so each is linkable and indexable). Sticky top nav with the active tab highlighted; keep it usable on mobile (scrollable tab bar or menu).
+- [x] **Light mode**: proper light theme (currently only follows the OS) with a manual light/dark toggle in the nav, remembered per visitor; keep the existing colour palette in both. Audit contrast.
 - [ ] Profile-style details borrowed from LinkedIn/blog layouts, kept simple: profile header with avatar, headline, location and quick links; skill chips; experience as a clean timeline with company logos; featured projects; "last updated" note.
 - [ ] Small UI polish pass: spacing, typography scale, consistent buttons and cards, focus states, hover/scroll animations kept subtle.
 

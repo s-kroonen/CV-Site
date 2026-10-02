@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/site/ThemeToggle";
 import { LogoutButton } from "./LogoutButton";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -8,7 +9,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link href="/admin" className="font-medium">
           Admin
         </Link>
-        <LogoutButton />
+        <div className="flex items-center gap-4">
+          <Link href="/" className="text-sm underline underline-offset-4">
+            View site
+          </Link>
+          <ThemeToggle />
+          <LogoutButton />
+        </div>
       </header>
       {children}
     </div>
