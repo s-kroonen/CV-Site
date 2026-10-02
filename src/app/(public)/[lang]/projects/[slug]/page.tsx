@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const project = await getProjectBySlug(slug, lang);
   if (!project) return { title: getDictionary(lang).meta.projectNotFound, robots: { index: false } };
 
-  const description = snippet(project.summary || project.description || project.title);
+  const description = snippet([project.summary, project.description].filter(Boolean).join(" - ") || project.title);
   const cover = asImages(project.images)[0];
   return pageMetadata({
     lang,

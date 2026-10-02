@@ -87,3 +87,18 @@ body {
   mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 10%, transparent 75%);
   opacity: 0.55;
 }
+
+/* ---- Accessibility / polish ---- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+html {
+  scroll-padding-top: 5rem; /* anchors don't hide under the sticky header */
+}

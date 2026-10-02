@@ -20,8 +20,29 @@ export async function getProfile(lang: Locale) {
 
 export async function getExperience(lang: Locale) {
   await ensureItemSlugs();
-  const rows = await prisma.experience.findMany({ where: publicWhere, orderBy: { sortIndex: "asc" } });
+  const rows = await prisma.experience.findMany({
+    where: publicWhere,
+    orderBy: { sortIndex: "asc" },
+    // Linked public projects, shown as small chips on the experience cards.
+    include: { projects: { where: publicWhere, orderBy: [{ featured: "desc" }, { sortIndex: "asc" }], select: { title: true, slug: true } } },
+  });
   return localizeRows("experience", rows, lang);
+}
+
+/** When anything public last changed (shown in the footer). */
+export async function getLastUpdated(): Promise<Date | null> {
+  const [profile, exp, edu, proj, skill, tr] = await Promise.all([
+    prisma.profile.findUnique({ where: { id: 1 }, select: { updatedAt: true } }),
+    prisma.experience.aggregate({ where: publicWhere, _max: { updatedAt: true } }),
+    prisma.education.aggregate({ where: publicWhere, _max: { updatedAt: true } }),
+    prisma.project.aggregate({ where: publicWhere, _max: { updatedAt: true } }),
+    prisma.skill.aggregate({ where: publicWhere, _max: { updatedAt: true } }),
+    prisma.translation.aggregate({ _max: { updatedAt: true } }),
+  ]);
+  const dates = [profile?.updatedAt, exp._max.updatedAt, edu._max.updatedAt, proj._max.updatedAt, skill._max.updatedAt, tr._max.updatedAt].filter(
+    (d): d is Date => !!d,
+  );
+  return dates.length ? new Date(Math.max(...dates.map((d) => +d))) : null;
 }
 
 export async function getEducation(lang: Locale) {

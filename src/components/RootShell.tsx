@@ -27,6 +27,10 @@ export function RootShell({ lang, children }: { lang: string; children: React.Re
     >
       {/* eslint-disable-next-line @next/next/no-head-element */}
       <head>
+        {/* Scroll/fade-in animations start at opacity 0; without JavaScript they would stay invisible. */}
+        <noscript>
+          <style>{`[style*="opacity:0"],[style*="opacity: 0"]{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
         {/* Applies a saved light/dark choice before first paint (no flash). */}
         <script
           dangerouslySetInnerHTML={{

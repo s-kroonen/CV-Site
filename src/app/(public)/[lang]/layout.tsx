@@ -4,7 +4,7 @@ import { RootShell } from "@/components/RootShell";
 import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { Backdrop } from "@/components/site/Backdrop";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { getNavTabs, getProfile } from "@/lib/data";
+import { getLastUpdated, getNavTabs, getProfile } from "@/lib/data";
 import { LOCALES, isLocale } from "@/lib/i18n/config";
 import { fmt, getDictionary } from "@/lib/i18n/dictionary";
 import { languageAlternates, alternateTypes, siteUrl, snippet, socialImage } from "@/lib/seo";
@@ -64,16 +64,28 @@ export default async function SiteLayout({
   if (!isLocale(lang)) notFound();
 
   const dictionary = getDictionary(lang);
-  const [profile, tabs] = await Promise.all([getProfile(lang), getNavTabs(lang)]);
+  const [profile, tabs, updated] = await Promise.all([getProfile(lang), getNavTabs(lang), getLastUpdated()]);
+  const updatedLabel = updated
+    ? fmt(dictionary.common.lastUpdated, {
+        date: new Intl.DateTimeFormat(lang === "nl" ? "nl-NL" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(updated),
+      })
+    : null;
 
   return (
     <RootShell lang={lang}>
       <LocaleProvider lang={lang} dictionary={dictionary}>
+        <a
+          href="#main"
+          className="sr-only z-50 rounded-md bg-accent px-4 py-2 text-sm text-accent-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        >
+          {dictionary.common.skipToContent}
+        </a>
         <Backdrop />
         <SiteHeader lang={lang} name={profile?.name ?? ""} avatarPath={profile?.avatarPath} tabs={tabs} />
-        <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6">{children}</main>
-        <footer className="border-t border-line py-8 text-center text-xs text-ink-muted">
-          {profile?.name ? fmt(dictionary.common.footer, { year: new Date().getFullYear(), name: profile.name }) : null}
+        <main id="main" className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6">{children}</main>
+        <footer className="flex flex-col items-center gap-1 border-t border-line py-8 text-center text-xs text-ink-muted">
+          {profile?.name ? <span>{fmt(dictionary.common.footer, { year: new Date().getFullYear(), name: profile.name })}</span> : null}
+          {updatedLabel && <span>{updatedLabel}</span>}
         </footer>
       </LocaleProvider>
     </RootShell>

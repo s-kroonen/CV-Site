@@ -45,6 +45,7 @@ export function ExperienceSection({
           />
           {items.map((item, index) => {
             const tags = asStringArray(item.tags).slice(0, 5);
+            const projects = ((item as { projects?: { title: string; slug: string }[] }).projects ?? []).slice(0, 3);
             const dateRange = formatDateRange(item.startDate, item.endDate, lang, t.common);
             const target = item.slug ? href(`/experience/${item.slug}`) : href("/experience");
             return (
@@ -83,6 +84,12 @@ export function ExperienceSection({
                         </span>
                       ))}
                     </div>
+                  )}
+                  {projects.length > 0 && (
+                    <p className="mt-3 text-sm text-ink-muted">
+                      <span className="font-medium text-ink">{t.detail.projects}:</span>{" "}
+                      {projects.map((p) => p.title).join(" · ")}
+                    </p>
                   )}
                   <span className="mt-3 inline-block text-sm text-accent underline decoration-accent/40 underline-offset-4 group-hover:decoration-accent">
                     {t.detail.readMore}

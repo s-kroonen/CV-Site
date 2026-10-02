@@ -43,6 +43,10 @@ const en = {
     backHome: "Back to the home page",
     screenshot: "{title} screenshot {n}",
     footer: "© {year} {name}",
+    lastUpdated: "Last updated {date}",
+    skipToContent: "Skip to content",
+    location: "Location",
+    emailMe: "Email",
   },
   contact: {
     introWithEmail: "For business inquiries, use the form below or email",
@@ -136,6 +140,10 @@ const nl: Dictionary = {
     backHome: "Terug naar de startpagina",
     screenshot: "{title} schermafbeelding {n}",
     footer: "© {year} {name}",
+    lastUpdated: "Laatst bijgewerkt op {date}",
+    skipToContent: "Ga naar de inhoud",
+    location: "Locatie",
+    emailMe: "E-mail",
   },
   contact: {
     introWithEmail: "Voor zakelijke vragen: gebruik het formulier hieronder of mail naar",
