@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { publicWhere } from "@/lib/lifecycle";
 import { LOCALES, localizedPath } from "@/lib/i18n/config";
 import { absoluteUrl } from "@/lib/seo";
+import { ensureItemSlugs } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +23,11 @@ function entries(path: string, lastModified: Date | undefined, priority: number)
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  await ensureItemSlugs();
   const [profile, exp, edu, projects, skills, translations] = await Promise.all([
     prisma.profile.findUnique({ where: { id: 1 }, select: { updatedAt: true } }),
-    prisma.experience.findMany({ where: publicWhere, select: { updatedAt: true } }),
-    prisma.education.findMany({ where: publicWhere, select: { updatedAt: true } }),
+    prisma.experience.findMany({ where: publicWhere, select: { slug: true, updatedAt: true } }),
+    prisma.education.findMany({ where: publicWhere, select: { slug: true, updatedAt: true } }),
     prisma.project.findMany({ where: publicWhere, select: { slug: true, updatedAt: true } }),
     prisma.skill.findMany({ where: publicWhere, select: { updatedAt: true } }),
     prisma.translation.findMany({ select: { updatedAt: true } }),
@@ -42,5 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(edu.length ? entries("/education", last(edu), 0.6) : []),
     ...entries("/contact", undefined, 0.5),
     ...projects.flatMap((p) => entries(`/projects/${p.slug}`, p.updatedAt, 0.7)),
+    ...exp.flatMap((e) => (e.slug ? entries(`/experience/${e.slug}`, e.updatedAt, 0.7) : [])),
+    ...edu.flatMap((e) => (e.slug ? entries(`/education/${e.slug}`, e.updatedAt, 0.5) : [])),
   ];
 }

@@ -57,11 +57,11 @@ const obj = (properties: Record<string, unknown>, required: string[] = []) => ({
 
 const FIELD_DOCS: Record<Entity, string> = {
   experience:
-    "sourceLang (en|nl); title (string), company (string) - at least one required; location; startDate and endDate (YYYY-MM-DD, endDate null/empty = current role); description; bullets (string[]); tags (string[]); logoPath (from upload_image); sortIndex (number, lower first).",
+    "sourceLang (en|nl); projectIds (string[], link to projects), educationIds (string[], link to education); title (string), company (string) - at least one required; location; startDate and endDate (YYYY-MM-DD, endDate null/empty = current role); description; bullets (string[]); tags (string[]); logoPath (from upload_image); sortIndex (number, lower first).",
   education:
-    "sourceLang (en|nl); institution (string), degree (string) - at least one required; field (field of study); startDate, endDate (YYYY-MM-DD); description; logoPath; sortIndex.",
+    "sourceLang (en|nl); experienceIds (string[], link to experience - education has no projects of its own, they come via linked experience); institution (string), degree (string) - at least one required; field (field of study); startDate, endDate (YYYY-MM-DD); description; logoPath; sortIndex.",
   projects:
-    "sourceLang (en|nl); title (required); slug (optional, generated from title); summary (one line); description; techStack (string[]); repoUrl; liveUrl; images (array of {src, alt, thumb?, width?, height?} - use upload_image results); featured (boolean); sortIndex.",
+    "sourceLang (en|nl); experienceIds (string[], the roles this project belongs to); title (required); slug (optional, generated from title); summary (one line); description; techStack (string[]); repoUrl; liveUrl; images (array of {src, alt, thumb?, width?, height?} - use upload_image results); featured (boolean); sortIndex.",
   skills:
     "sourceLang (en|nl); name (required); category (string, e.g. 'Languages'); proficiency (0-100 or null for no level bar); sortIndex.",
 };

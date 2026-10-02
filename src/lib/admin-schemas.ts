@@ -50,6 +50,9 @@ export const experienceSchema = z
     bullets: z.array(z.string().trim().min(1).max(500)).default([]),
     tags: z.array(z.string().trim().min(1).max(100)).default([]),
     sortIndex: z.number().int().default(0),
+    // Links (ids). undefined = leave the current links alone.
+    projectIds: z.array(z.string()).optional(),
+    educationIds: z.array(z.string()).optional(),
   })
   .refine((v) => v.title || v.company, { message: "Enter a job title or a company", path: ["title"] });
 
@@ -64,6 +67,7 @@ export const educationSchema = z
     endDate: optionalDate,
     description: z.string().trim().max(5000).nullable().optional(),
     sortIndex: z.number().int().default(0),
+    experienceIds: z.array(z.string()).optional(),
   })
   .refine((v) => v.institution || v.degree, { message: "Enter an institution or a degree", path: ["institution"] });
 
@@ -98,6 +102,7 @@ export const projectSchema = z.object({
     .default([]),
   featured: z.boolean().default(false),
   sortIndex: z.number().int().default(0),
+  experienceIds: z.array(z.string()).optional(),
 });
 
 export const skillSchema = z.object({

@@ -51,3 +51,21 @@ To block one, add its name to `BLOCKED_CRAWLERS` in `src/lib/seo.ts`.
 Search engines rank on what is written: fill in the profile bio and tagline,
 give every project a summary and description, and add alt text to images.
 Empty sections are hidden, so the site only shows what you have filled in.
+
+## Linking experience, projects and education
+
+Items can be linked (many-to-many) in the admin forms ("Linked projects",
+"Linked education", "Linked experience") or over MCP (`projectIds`,
+`educationIds`, `experienceIds`):
+
+- an **experience** can have several projects and several education items;
+- a **project** shows the experiences it belongs to;
+- **education has no projects of its own**: its page lists the linked
+  experiences and, through them, their projects.
+
+Experience and education have their own detail pages
+(`/en/experience/<slug>`, `/en/education/<slug>`; the slug is created from
+the title and stays the same when you edit the text). The Overview and the
+Experience/Education tabs show compact cards (no bullet points) that link to
+them. Archived or trashed items disappear from these links on the public site.
+Export/import keeps the links (as project slugs and education references).

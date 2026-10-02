@@ -82,6 +82,7 @@ export function toMarkdown(cv: PublicCv): string {
     out.push(`\n## ${t.sections.experience}`);
     for (const e of cv.experience) {
       out.push(`\n### ${[e.title, e.company].filter(Boolean).join(" · ")}`);
+      if (e.slug) out.push(`URL: ${absoluteUrl(localizedPath(cv.lang, `/experience/${e.slug}`))}`);
       const meta = [range(e.startDate, e.endDate, cv.lang), e.location].filter(Boolean).join(" | ");
       if (meta) out.push(meta);
       if (e.description) out.push(`\n${e.description}`);
@@ -95,6 +96,7 @@ export function toMarkdown(cv: PublicCv): string {
     out.push(`\n## ${t.sections.education}`);
     for (const e of cv.education) {
       out.push(`\n### ${[e.degree, e.institution].filter(Boolean).join(" - ")}`);
+      if (e.slug) out.push(`URL: ${absoluteUrl(localizedPath(cv.lang, `/education/${e.slug}`))}`);
       const meta = [e.field, range(e.startDate, e.endDate, cv.lang)].filter(Boolean).join(" | ");
       if (meta) out.push(meta);
       if (e.description) out.push(`\n${e.description}`);

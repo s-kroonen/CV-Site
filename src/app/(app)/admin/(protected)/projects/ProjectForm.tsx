@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import type { ProjectModel } from "@/generated/prisma/models";
 import { asImages, asStringArray } from "@/lib/json";
 import { ImageField, type ImageValue } from "@/components/admin/ImageField";
+import { RelationPicker } from "@/components/admin/RelationPicker";
 import { TranslationPanel, readFormFields, useTranslation, type TranslationInit } from "@/components/admin/TranslationPanel";
 import type { Locale } from "@/lib/i18n/config";
 import { Field, FormError, SubmitButton, TagInput, TextArea, readApiError } from "@/components/admin/fields";
 
-export function ProjectForm({ item, translation }: { item?: ProjectModel; translation?: TranslationInit }) {
+export function ProjectForm({ item, translation, links }: { links?: { experienceIds: string[] }; item?: ProjectModel; translation?: TranslationInit }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const [experienceIds, setExperienceIds] = useState<string[]>(links?.experienceIds ?? []);
   const tr = useTranslation("projects", (item?.sourceLang as Locale) ?? "en", translation ?? null);
   const [images, setImages] = useState<ImageValue[]>(item ? asImages(item.images) : []);
   const [techStack, setTechStack] = useState<string[]>(item ? asStringArray(item.techStack) : []);
@@ -26,6 +28,7 @@ export function ProjectForm({ item, translation }: { item?: ProjectModel; transl
     const data = new FormData(event.currentTarget);
     const payload = {
       ...tr.payload(),
+      experienceIds,
       title: data.get("title"),
       slug: data.get("slug") || "",
       summary: data.get("summary"),
@@ -90,6 +93,13 @@ export function ProjectForm({ item, translation }: { item?: ProjectModel; transl
       </label>
 
       <Field label="Sort index" name="sortIndex" type="number" defaultValue={item?.sortIndex ?? 0} hint="Lower numbers appear first." />
+      <RelationPicker
+        label="Linked experience"
+        entity="experience"
+        value={experienceIds}
+        onChange={setExperienceIds}
+        hint="The role(s) this project was done in. The project shows up on that experience's page."
+      />
       <TranslationPanel tr={tr} getSource={() => readFormFields(formRef.current, ["summary", "description"])} />
       <FormError message={error} />
       <SubmitButton pending={saving} />

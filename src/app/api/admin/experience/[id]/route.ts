@@ -1,5 +1,6 @@
 import { applyLifecycle } from "@/lib/lifecycle";
 import { prisma } from "@/lib/prisma";
+import { ensureItemSlugs } from "@/lib/slug";
 import { saveAdminTranslation } from "@/lib/admin-translation";
 import { experienceSchema, formatZodError } from "@/lib/admin-schemas";
 
@@ -11,16 +12,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return Response.json({ error: formatZodError(parsed.error) }, { status: 400 });
   }
 
-  const { startDate, endDate, ...rest } = parsed.data;
+  const { startDate, endDate, projectIds, educationIds, ...rest } = parsed.data;
   const updated = await prisma.experience.update({
     where: { id },
     data: {
       ...rest,
       startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null,
+      projects: projectIds ? { set: projectIds.map((id) => ({ id })) } : undefined,
+      education: educationIds ? { set: educationIds.map((id) => ({ id })) } : undefined,
     },
   });
 
+  await ensureItemSlugs();
   const translation = await saveAdminTranslation("experience", id, updated, json);
   return Response.json({ ...updated, translation });
 }

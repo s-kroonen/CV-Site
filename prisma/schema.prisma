@@ -37,10 +37,11 @@ model PrivateContact {
 
 model Experience {
   id          String    @id @default(cuid())
-  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
+  sourceLang  String    @default("en") // language the base text fields are written in ("en" | "nl")
   company     String    @default("")
   title       String    @default("")
   location    String?
+  slug        String?   @unique // detail page URL, generated from title + company
   logoPath    String? // /uploads/... company or school logo
   startDate   DateTime?
   endDate     DateTime?
@@ -53,15 +54,19 @@ model Experience {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  projects  Project[]
+  education Education[]
+
   @@index([sortIndex])
 }
 
 model Education {
   id          String    @id @default(cuid())
-  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
+  sourceLang  String    @default("en") // language the base text fields are written in ("en" | "nl")
   institution String    @default("")
   degree      String    @default("")
   field       String?
+  slug        String?   @unique // detail page URL, generated from degree + institution
   logoPath    String? // /uploads/... company or school logo
   startDate   DateTime?
   endDate     DateTime?
@@ -72,41 +77,45 @@ model Education {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  experiences Experience[]
+
   @@index([sortIndex])
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
+  id          String    @id @default(cuid())
+  sourceLang  String    @default("en") // language the base text fields are written in ("en" | "nl")
   title       String
-  slug        String   @unique
-  summary     String   @default("")
-  description String   @default("")
+  slug        String    @unique
+  summary     String    @default("")
+  description String    @default("")
   techStack   Json // string[]
   repoUrl     String?
   liveUrl     String?
   images      Json // string[]
-  featured    Boolean  @default(false)
-  sortIndex   Int      @default(0)
+  featured    Boolean   @default(false)
+  sortIndex   Int       @default(0)
   archivedAt  DateTime? // hidden from the public site, restorable
   deletedAt   DateTime? // in the trash, restorable until purged
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  experiences Experience[]
 
   @@index([sortIndex])
 }
 
 model Skill {
-  id          String   @id @default(cuid())
-  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
+  id          String    @id @default(cuid())
+  sourceLang  String    @default("en") // language the base text fields are written in ("en" | "nl")
   name        String
-  category    String   @default("")
+  category    String    @default("")
   proficiency Int? // 0-100, null = don't show a level
-  sortIndex   Int      @default(0)
+  sortIndex   Int       @default(0)
   archivedAt  DateTime? // hidden from the public site, restorable
   deletedAt   DateTime? // in the trash, restorable until purged
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([sortIndex])
 }
@@ -150,15 +159,15 @@ model ApiToken {
 
 // What MCP clients did (one row per tool call).
 model AuditLog {
-  id        String   @id @default(cuid())
-  at        DateTime @default(now())
-  actor     String // token name
-  tool      String
-  entity    String?
-  entityId  String?
-  ok        Boolean
-  detail    String? // error message or short summary
-  tokenId   String?
+  id       String   @id @default(cuid())
+  at       DateTime @default(now())
+  actor    String // token name
+  tool     String
+  entity   String?
+  entityId String?
+  ok       Boolean
+  detail   String? // error message or short summary
+  tokenId  String?
 
   @@index([at])
 }

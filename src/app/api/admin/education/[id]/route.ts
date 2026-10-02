@@ -1,5 +1,6 @@
 import { applyLifecycle } from "@/lib/lifecycle";
 import { prisma } from "@/lib/prisma";
+import { ensureItemSlugs } from "@/lib/slug";
 import { saveAdminTranslation } from "@/lib/admin-translation";
 import { educationSchema, formatZodError } from "@/lib/admin-schemas";
 
@@ -11,16 +12,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return Response.json({ error: formatZodError(parsed.error) }, { status: 400 });
   }
 
-  const { startDate, endDate, ...rest } = parsed.data;
+  const { startDate, endDate, experienceIds, ...rest } = parsed.data;
   const updated = await prisma.education.update({
     where: { id },
     data: {
       ...rest,
       startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null,
+      experiences: experienceIds ? { set: experienceIds.map((id) => ({ id })) } : undefined,
     },
   });
 
+  await ensureItemSlugs();
   const translation = await saveAdminTranslation("education", id, updated, json);
   return Response.json({ ...updated, translation });
 }

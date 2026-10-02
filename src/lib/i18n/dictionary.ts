@@ -59,6 +59,21 @@ const en = {
     humanCheckFailed:
       "The human check could not load. Disable any content blocker for this site and reload, or email me directly.",
   },
+  detail: {
+    readMore: "Read more →",
+    backToExperience: "← Back to experience",
+    backToEducation: "← Back to education",
+    highlights: "Highlights",
+    projects: "Projects",
+    experience: "Experience",
+    education: "Education",
+    projectsFromRole: "Projects from this role",
+    projectsFromStudy: "Projects from related experience",
+    relatedEducation: "Related education",
+    relatedExperience: "Experience",
+    experienceDetailDescription: "{title} at {company}",
+    educationDetailDescription: "{degree} at {institution}",
+  },
   md: {
     location: "Location",
     email: "Email",
@@ -136,6 +151,21 @@ const nl: Dictionary = {
     error: "Er ging iets mis. Probeer het opnieuw.",
     humanCheckFailed:
       "De menselijke controle kon niet laden. Zet een eventuele contentblokker voor deze site uit en laad de pagina opnieuw, of mail me direct.",
+  },
+  detail: {
+    readMore: "Meer lezen →",
+    backToExperience: "← Terug naar ervaring",
+    backToEducation: "← Terug naar opleiding",
+    highlights: "Hoogtepunten",
+    projects: "Projecten",
+    experience: "Ervaring",
+    education: "Opleiding",
+    projectsFromRole: "Projecten uit deze functie",
+    projectsFromStudy: "Projecten uit gerelateerde ervaring",
+    relatedEducation: "Gerelateerde opleiding",
+    relatedExperience: "Ervaring",
+    experienceDetailDescription: "{title} bij {company}",
+    educationDetailDescription: "{degree} aan {institution}",
   },
   md: {
     location: "Locatie",

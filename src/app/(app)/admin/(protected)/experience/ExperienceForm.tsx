@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ExperienceModel } from "@/generated/prisma/models";
 import { asStringArray } from "@/lib/json";
 import { ImageField, type ImageValue } from "@/components/admin/ImageField";
+import { RelationPicker } from "@/components/admin/RelationPicker";
 import { TranslationPanel, readFormFields, useTranslation, type TranslationInit } from "@/components/admin/TranslationPanel";
 import type { Locale } from "@/lib/i18n/config";
 import { Field, FormError, SubmitButton, TagInput, TextArea, readApiError } from "@/components/admin/fields";
@@ -14,9 +15,11 @@ function toDateInput(d: Date | string | null | undefined): string {
   return new Date(d).toISOString().slice(0, 10);
 }
 
-export function ExperienceForm({ item, translation }: { item?: ExperienceModel; translation?: TranslationInit }) {
+export function ExperienceForm({ item, translation, links }: { links?: { projectIds: string[]; educationIds: string[] }; item?: ExperienceModel; translation?: TranslationInit }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const [projectIds, setProjectIds] = useState<string[]>(links?.projectIds ?? []);
+  const [educationIds, setEducationIds] = useState<string[]>(links?.educationIds ?? []);
   const tr = useTranslation("experience", (item?.sourceLang as Locale) ?? "en", translation ?? null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -36,6 +39,8 @@ export function ExperienceForm({ item, translation }: { item?: ExperienceModel; 
 
     const payload = {
       ...tr.payload(),
+      projectIds,
+      educationIds,
       logoPath: logo[0]?.thumb ?? logo[0]?.src ?? null,
       company: data.get("company"),
       title: data.get("title"),
@@ -95,6 +100,20 @@ export function ExperienceForm({ item, translation }: { item?: ExperienceModel; 
         type="number"
         defaultValue={item?.sortIndex ?? 0}
         hint="Lower numbers appear first."
+      />
+      <RelationPicker
+        label="Linked projects"
+        entity="projects"
+        value={projectIds}
+        onChange={setProjectIds}
+        hint="Projects you worked on in this role. They appear on this experience's page, and the experience appears on theirs."
+      />
+      <RelationPicker
+        label="Linked education"
+        entity="education"
+        value={educationIds}
+        onChange={setEducationIds}
+        hint="For example the study programme an internship belongs to."
       />
       <TranslationPanel tr={tr} getSource={() => readFormFields(formRef.current, ["title", "location", "description", "bullets"])} />
       <FormError message={error} />

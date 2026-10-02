@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { EducationModel } from "@/generated/prisma/models";
 import { ImageField, type ImageValue } from "@/components/admin/ImageField";
+import { RelationPicker } from "@/components/admin/RelationPicker";
 import { TranslationPanel, readFormFields, useTranslation, type TranslationInit } from "@/components/admin/TranslationPanel";
 import type { Locale } from "@/lib/i18n/config";
 import { Field, FormError, SubmitButton, TextArea, readApiError } from "@/components/admin/fields";
@@ -13,9 +14,10 @@ function toDateInput(d: Date | string | null | undefined): string {
   return new Date(d).toISOString().slice(0, 10);
 }
 
-export function EducationForm({ item, translation }: { item?: EducationModel; translation?: TranslationInit }) {
+export function EducationForm({ item, translation, links }: { links?: { experienceIds: string[] }; item?: EducationModel; translation?: TranslationInit }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const [experienceIds, setExperienceIds] = useState<string[]>(links?.experienceIds ?? []);
   const tr = useTranslation("education", (item?.sourceLang as Locale) ?? "en", translation ?? null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -29,6 +31,7 @@ export function EducationForm({ item, translation }: { item?: EducationModel; tr
     const data = new FormData(event.currentTarget);
     const payload = {
       ...tr.payload(),
+      experienceIds,
       logoPath: logo[0]?.thumb ?? logo[0]?.src ?? null,
       institution: data.get("institution"),
       degree: data.get("degree"),
@@ -79,6 +82,13 @@ export function EducationForm({ item, translation }: { item?: EducationModel; tr
         type="number"
         defaultValue={item?.sortIndex ?? 0}
         hint="Lower numbers appear first."
+      />
+      <RelationPicker
+        label="Linked experience"
+        entity="experience"
+        value={experienceIds}
+        onChange={setExperienceIds}
+        hint="Internships or jobs that belong to this education. Their projects show up here too (education has no projects of its own)."
       />
       <TranslationPanel tr={tr} getSource={() => readFormFields(formRef.current, ["degree", "field", "description"])} />
       <FormError message={error} />

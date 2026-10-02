@@ -11,13 +11,19 @@ export async function POST(request: Request) {
     return Response.json({ error: formatZodError(parsed.error) }, { status: 400 });
   }
 
-  const { repoUrl, liveUrl, slug, ...rest } = parsed.data;
+  const { repoUrl, liveUrl, slug, experienceIds, ...rest } = parsed.data;
   // Blank slug -> derived from the title; an explicit one is kept as typed (collision -> 409 below).
   const finalSlug = slug || (await uniqueProjectSlug(slugify(rest.title)));
 
   try {
     const created = await prisma.project.create({
-      data: { ...rest, slug: finalSlug, repoUrl: repoUrl || null, liveUrl: liveUrl || null },
+      data: {
+        ...rest,
+        slug: finalSlug,
+        repoUrl: repoUrl || null,
+        liveUrl: liveUrl || null,
+        experiences: experienceIds ? { connect: experienceIds.map((id) => ({ id })) } : undefined,
+      },
     });
     const translation = await saveAdminTranslation("projects", created.id, created, json);
     return Response.json({ ...created, translation }, { status: 201 });

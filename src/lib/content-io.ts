@@ -19,7 +19,7 @@ import {
   projectSchema,
   skillSchema,
 } from "@/lib/admin-schemas";
-import { slugify } from "@/lib/slug";
+import { ensureItemSlugs, slugify } from "@/lib/slug";
 import { hasContent, sanitizeFields, type FieldValues, type TEntity } from "@/lib/translations";
 import { isLocale } from "@/lib/i18n/config";
 import { uploadDir } from "@/lib/uploads";
@@ -50,7 +50,10 @@ export async function buildExport(includePrivate: boolean): Promise<ExportDoc> {
   const [profile, privateContact, experience, education, projects, skills] = await Promise.all([
     prisma.profile.findUnique({ where: { id: 1 } }),
     includePrivate ? prisma.privateContact.findUnique({ where: { id: 1 } }) : null,
-    prisma.experience.findMany({ orderBy: { sortIndex: "asc" } }),
+    prisma.experience.findMany({
+      orderBy: { sortIndex: "asc" },
+      include: { projects: { select: { slug: true } }, education: { select: { institution: true, degree: true } } },
+    }),
     prisma.education.findMany({ orderBy: { sortIndex: "asc" } }),
     prisma.project.findMany({ orderBy: { sortIndex: "asc" } }),
     prisma.skill.findMany({ orderBy: { sortIndex: "asc" } }),
@@ -73,7 +76,12 @@ export async function buildExport(includePrivate: boolean): Promise<ExportDoc> {
     exportedAt: new Date().toISOString(),
     profile: profile && withTranslations("profile", "1", serializeProfile(profile)),
     privateContact: privateContact && { email: privateContact.email, phone: privateContact.phone },
-    experience: experience.map((r) => withTranslations("experience", r.id, serializeExperience(r))),
+    experience: experience.map((r) => ({
+      ...withTranslations("experience", r.id, serializeExperience(r)),
+      // Links travel as references (ids differ between hosts): project slugs and education institution+degree.
+      projectSlugs: r.projects.map((p) => p.slug),
+      educationRefs: r.education.map((e) => ({ institution: e.institution, degree: e.degree })),
+    })),
     education: education.map((r) => withTranslations("education", r.id, serializeEducation(r))),
     projects: projects.map((r) => withTranslations("projects", r.id, serializeProject(r))),
     skills: skills.map((r) => withTranslations("skills", r.id, serializeSkill(r))),
@@ -149,7 +157,8 @@ export function parseImportFile(buf: Uint8Array, filename: string): ParsedImport
 
 type Dates = { archivedAt: Date | null; deletedAt: Date | null };
 type PreparedTranslation = { lang: string; fields: FieldValues; manual: boolean };
-type PreparedItem = { key: string; data: Row & Dates; translations: PreparedTranslation[] };
+type Links = { projectSlugs: string[]; educationRefs: { institution: string; degree: string }[] };
+type PreparedItem = { key: string; data: Row & Dates; translations: PreparedTranslation[]; links?: Links };
 export type Prepared = {
   profile?: z.infer<typeof profileSchema>;
   profileTranslations: PreparedTranslation[];
@@ -171,6 +180,19 @@ function translationsOf(entity: TEntity, raw: unknown): PreparedTranslation[] {
     const fields = sanitizeFields(entity, v);
     return hasContent(fields) ? [{ lang, fields, manual: (v as Record<string, unknown>).manual !== false }] : [];
   });
+}
+
+/** Links of an exported experience: project slugs and education references. */
+function linksOf(raw: unknown): Links {
+  const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const slugs = Array.isArray(o.projectSlugs) ? o.projectSlugs.filter((x): x is string => typeof x === "string") : [];
+  const refs = Array.isArray(o.educationRefs)
+    ? o.educationRefs.flatMap((r) => {
+        const x = (r && typeof r === "object" ? r : {}) as Record<string, unknown>;
+        return typeof x.institution === "string" && typeof x.degree === "string" ? [{ institution: x.institution, degree: x.degree }] : [];
+      })
+    : [];
+  return { projectSlugs: slugs, educationRefs: refs };
 }
 
 const toDate = (v: string | null | undefined) => (v ? new Date(v) : null);
@@ -218,17 +240,21 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
   doc.experience.forEach((raw, i) => {
     const r = experienceSchema.safeParse(raw);
     if (!r.success) return fail("experience", i, r.error);
-    const { startDate, endDate, ...rest } = r.data;
+    const { startDate, endDate, projectIds: _p, educationIds: _e, ...rest } = r.data;
+    void _p;
+    void _e;
     out.experience.push({
       key: [norm(r.data.title), norm(r.data.company), norm(startDate)].join("|"),
       data: { ...rest, startDate: toDate(startDate), endDate: toDate(endDate), ...lifeOf(raw) },
       translations: translationsOf("experience", raw),
+      links: linksOf(raw),
     });
   });
   doc.education.forEach((raw, i) => {
     const r = educationSchema.safeParse(raw);
     if (!r.success) return fail("education", i, r.error);
-    const { startDate, endDate, ...rest } = r.data;
+    const { startDate, endDate, experienceIds: _x, ...rest } = r.data;
+    void _x;
     out.education.push({
       key: [norm(r.data.institution), norm(r.data.degree)].join("|"),
       data: { ...rest, startDate: toDate(startDate), endDate: toDate(endDate), ...lifeOf(raw) },
@@ -242,7 +268,8 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
     const slug = r.data.slug || slugify(r.data.title);
     if (slugsInFile.has(slug)) return errors.push(`projects #${i + 1}: duplicate slug "${slug}" in the file.`);
     slugsInFile.add(slug);
-    const { repoUrl, liveUrl, ...rest } = r.data;
+    const { repoUrl, liveUrl, experienceIds: _x, ...rest } = r.data;
+    void _x;
     out.projects.push({
       key: slug,
       data: { ...rest, slug, repoUrl: repoUrl || null, liveUrl: liveUrl || null, ...lifeOf(raw) },
@@ -339,8 +366,11 @@ export async function applyImport(
       }
     };
     // `as never`: rows were validated by the same zod schemas the admin API uses.
+    const createdExperience: { id: string; links: Links }[] = [];
     for (const it of toCreate.experience) {
-      await saveTranslations("experience", (await tx.experience.create({ data: it.data as never })).id, it.translations);
+      const row = await tx.experience.create({ data: it.data as never });
+      await saveTranslations("experience", row.id, it.translations);
+      if (it.links) createdExperience.push({ id: row.id, links: it.links });
     }
     for (const it of toCreate.education) {
       await saveTranslations("education", (await tx.education.create({ data: it.data as never })).id, it.translations);
@@ -352,6 +382,23 @@ export async function applyImport(
       await saveTranslations("skills", (await tx.skill.create({ data: it.data as never })).id, it.translations);
     }
 
+    // Links last, once every project and education item exists on this host.
+    if (createdExperience.some((c) => c.links.projectSlugs.length || c.links.educationRefs.length)) {
+      const allEducation = await tx.education.findMany({ select: { id: true, institution: true, degree: true } });
+      const refKey = (institution: string, degree: string) => `${norm(institution)}|${norm(degree)}`;
+      const educationByRef = new Map(allEducation.map((e) => [refKey(e.institution, e.degree), e.id]));
+      for (const c of createdExperience) {
+        const projects = c.links.projectSlugs.length ? await tx.project.findMany({ where: { slug: { in: c.links.projectSlugs } }, select: { id: true } }) : [];
+        const education = c.links.educationRefs.flatMap((r) => educationByRef.get(refKey(r.institution, r.degree)) ?? []);
+        if (projects.length || education.length) {
+          await tx.experience.update({
+            where: { id: c.id },
+            data: { projects: { connect: projects }, education: { connect: education.map((id) => ({ id })) } },
+          });
+        }
+      }
+    }
+
     if (includeProfile && p.profile) {
       await tx.profile.upsert({ where: { id: 1 }, create: { id: 1, ...p.profile }, update: p.profile });
       await saveTranslations("profile", "1", p.profileTranslations);
@@ -361,5 +408,6 @@ export async function applyImport(
     }
   });
 
+  await ensureItemSlugs();
   return summary;
 }

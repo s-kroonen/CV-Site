@@ -10,7 +10,7 @@ import {
   skillSchema,
 } from "@/lib/admin-schemas";
 import { applyLifecycle, viewWhere, type Entity, type LifecycleAction, type LifecycleView } from "@/lib/lifecycle";
-import { slugify, uniqueProjectSlug } from "@/lib/slug";
+import { ensureItemSlugs, slugify, uniqueProjectSlug } from "@/lib/slug";
 import { getTranslations, parseProvided, saveTranslation, setManualTranslation, TranslationFailed, type TEntity } from "@/lib/translations";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -30,6 +30,7 @@ export function serializeExperience(r: any, withId = false): Row {
   return {
     ...(withId ? { id: r.id } : {}),
     sourceLang: r.sourceLang ?? "en",
+    slug: r.slug ?? null,
     company: r.company,
     title: r.title,
     location: r.location,
@@ -47,6 +48,7 @@ export function serializeEducation(r: any, withId = false): Row {
   return {
     ...(withId ? { id: r.id } : {}),
     sourceLang: r.sourceLang ?? "en",
+    slug: r.slug ?? null,
     institution: r.institution,
     degree: r.degree,
     field: r.field,
@@ -126,16 +128,38 @@ function delegate(entity: Entity) {
 export async function listItems(entity: Entity, view: LifecycleView): Promise<Row[]> {
   const rows = await (delegate(entity) as unknown as {
     findMany(a: object): Promise<unknown[]>;
-  }).findMany({ where: viewWhere[view], orderBy: { sortIndex: "asc" } });
-  return rows.map((r) => SERIALIZERS[entity](r as never, true));
+  }).findMany({ where: viewWhere[view], orderBy: { sortIndex: "asc" }, include: LINK_INCLUDE[entity] });
+  return rows.map((r) => ({ ...SERIALIZERS[entity](r as never, true), ...linkIds(entity, r as Row) }));
+}
+
+// Links between items (many-to-many). Education has no projects of its own: they come via experience.
+const idOnly = { select: { id: true } };
+const LINK_INCLUDE: Record<Entity, object | undefined> = {
+  experience: { projects: idOnly, education: idOnly },
+  education: { experiences: idOnly },
+  projects: { experiences: idOnly },
+  skills: undefined,
+};
+const ids = (v: unknown) => (Array.isArray(v) ? (v as { id: string }[]).map((x) => x.id) : []);
+function linkIds(entity: Entity, row: Row): Row {
+  switch (entity) {
+    case "experience":
+      return { projectIds: ids(row.projects), educationIds: ids(row.education) };
+    case "education":
+    case "projects":
+      return { experienceIds: ids(row.experiences) };
+    default:
+      return {};
+  }
 }
 
 export async function getItem(entity: Entity, id: string): Promise<Row> {
   const row = await (delegate(entity) as unknown as { findUnique(a: object): Promise<unknown> }).findUnique({
     where: { id },
+    include: LINK_INCLUDE[entity],
   });
   if (!row) throw new ContentError(`No ${entity} item with id "${id}".`);
-  return { ...SERIALIZERS[entity](row as never, true), translations: await getTranslations(entity, id, row as Row) };
+  return { ...SERIALIZERS[entity](row as never, true), ...linkIds(entity, row as Row), translations: await getTranslations(entity, id, row as Row) };
 }
 
 /** Splits a `translation` entry off the incoming data (it is stored separately, not on the item). */
@@ -145,32 +169,44 @@ function splitTranslation(data: Row): { data: Row; translation: unknown } {
 }
 
 async function afterSave(entity: TEntity, id: string, row: unknown, translation: unknown) {
+  if (entity === "experience" || entity === "education") await ensureItemSlugs(); // detail-page URL
   return saveTranslation({ entity, id, row: row as Row, provided: parseProvided(entity, translation) });
 }
 
 const toDate = (v: string | null | undefined) => (v ? new Date(v) : null);
 
 /** Validates `data` for the entity and returns Prisma-ready fields. */
-async function prepare(entity: Entity, data: Row, excludeProjectId?: string): Promise<Row> {
+type Mode = "create" | "update";
+/** Prisma relation input for a list of ids; undefined (not given) leaves the links untouched. */
+const rel = (list: string[] | undefined, mode: Mode) =>
+  list === undefined ? undefined : mode === "create" ? { connect: list.map((id) => ({ id })) } : { set: list.map((id) => ({ id })) };
+
+async function prepare(entity: Entity, data: Row, excludeProjectId?: string, mode: Mode = "update"): Promise<Row> {
   switch (entity) {
     case "experience": {
       const r = experienceSchema.safeParse(data);
       if (!r.success) throw new ContentError(formatZodError(r.error));
-      const { startDate, endDate, ...rest } = r.data;
-      return { ...rest, startDate: toDate(startDate), endDate: toDate(endDate) };
+      const { startDate, endDate, projectIds, educationIds, ...rest } = r.data;
+      return {
+        ...rest,
+        startDate: toDate(startDate),
+        endDate: toDate(endDate),
+        projects: rel(projectIds, mode),
+        education: rel(educationIds, mode),
+      };
     }
     case "education": {
       const r = educationSchema.safeParse(data);
       if (!r.success) throw new ContentError(formatZodError(r.error));
-      const { startDate, endDate, ...rest } = r.data;
-      return { ...rest, startDate: toDate(startDate), endDate: toDate(endDate) };
+      const { startDate, endDate, experienceIds, ...rest } = r.data;
+      return { ...rest, startDate: toDate(startDate), endDate: toDate(endDate), experiences: rel(experienceIds, mode) };
     }
     case "projects": {
       const r = projectSchema.safeParse(data);
       if (!r.success) throw new ContentError(formatZodError(r.error));
-      const { repoUrl, liveUrl, slug, ...rest } = r.data;
+      const { repoUrl, liveUrl, slug, experienceIds, ...rest } = r.data;
       const finalSlug = slug || (await uniqueProjectSlug(slugify(rest.title), excludeProjectId));
-      return { ...rest, slug: finalSlug, repoUrl: repoUrl || null, liveUrl: liveUrl || null };
+      return { ...rest, slug: finalSlug, repoUrl: repoUrl || null, liveUrl: liveUrl || null, experiences: rel(experienceIds, mode) };
     }
     case "skills": {
       const r = skillSchema.safeParse(data);
@@ -191,7 +227,7 @@ async function guardSlug<T>(fn: () => Promise<T>): Promise<T> {
 
 export async function createItem(entity: Entity, input: Row): Promise<Row> {
   const { data, translation } = splitTranslation(input);
-  const fields = await prepare(entity, data);
+  const fields = await prepare(entity, data, undefined, "create");
   const row = await guardSlug(() =>
     (delegate(entity) as unknown as { create(a: object): Promise<unknown> }).create({ data: fields }),
   );
@@ -205,10 +241,11 @@ export async function updateItem(entity: Entity, id: string, input: Row): Promis
   const { data: patch, translation } = splitTranslation(input);
   const current = await getItem(entity, id);
   // id and lifecycle fields aren't editable here (lifecycle changes go through setLifecycle).
-  const drop = ["id", "archivedAt", "deletedAt", "translations", "translationStatus"];
+  const drop = ["id", "archivedAt", "deletedAt", "translations", "translationStatus", "projectIds", "educationIds", "experienceIds"];
   const strip = (r: Row) => Object.fromEntries(Object.entries(r).filter(([k]) => !drop.includes(k)));
   const editable = strip(current);
-  const patchFields = strip(patch);
+  // Link lists are only changed when the caller passes them explicitly.
+  const patchFields = Object.fromEntries(Object.entries(patch).filter(([k]) => !["id", "archivedAt", "deletedAt"].includes(k)));
   const fields = await prepare(entity, { ...editable, ...patchFields }, entity === "projects" ? id : undefined);
   const row = await guardSlug(() =>
     (delegate(entity) as unknown as { update(a: object): Promise<unknown> }).update({ where: { id }, data: fields }),

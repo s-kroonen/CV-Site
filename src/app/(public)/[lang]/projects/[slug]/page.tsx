@@ -6,6 +6,7 @@ import { fmt, getDictionary } from "@/lib/i18n/dictionary";
 import { localizedPath } from "@/lib/i18n/config";
 import { resolveLang } from "@/lib/i18n/params";
 import { JsonLd } from "@/components/site/JsonLd";
+import { RelatedList } from "@/components/site/RelatedList";
 import { absoluteUrl, pageMetadata, snippet } from "@/lib/seo";
 import { asImages, asStringArray } from "@/lib/json";
 import { FadeInView } from "@/components/motion/FadeInView";
@@ -92,6 +93,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ lang: 
               ))}
             </div>
           )}
+          <RelatedList
+            title={t.detail.experience}
+            items={project.experiences.map((e) => ({
+              id: e.id,
+              href: localizedPath(lang, e.slug ? `/experience/${e.slug}` : "/experience"),
+              title: e.title || e.company,
+              subtitle: e.title ? e.company : undefined,
+            }))}
+          />
           <div className="flex gap-4 text-sm">
             {project.repoUrl && (
               <a

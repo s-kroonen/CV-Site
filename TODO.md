@@ -93,16 +93,17 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 
 ## 8. Linked content and detail pages
 
-- [ ] **Relations** between items (many-to-many, editable in admin and via MCP):
-  - [ ] Experience <-> Project (a role can have several projects; a project can belong to several roles).
-  - [ ] Experience <-> Education (e.g. an internship belongs to a study programme).
-  - [ ] Education never links to projects directly: a project that belongs to a study must hang off an experience; the education page shows those projects *through* its linked experiences.
-- [ ] **Detail pages** (own URL per language, in the sitemap, with JSON-LD):
-  - [ ] Experience detail: full description, bullet points, tags, linked projects and linked education.
-  - [ ] Project detail: also shows the experiences it belongs to (reverse link).
-  - [ ] Education detail: linked experiences (and their projects).
-- [ ] **Compact lists**: the Overview and the Experience tab show basic info only (title, company, dates, short description, no bullet points) as cards that link to the detail page.
-- [ ] Admin pickers for linking (search + add/remove), import/export and MCP tools carry the links.
+- [x] **Relations** between items (many-to-many, editable in admin and via MCP):
+  - [x] Experience <-> Project (a role can have several projects; a project can belong to several roles).
+  - [x] Experience <-> Education (e.g. an internship belongs to a study programme).
+  - [x] Education never links to projects directly: a project that belongs to a study must hang off an experience; the education page shows those projects *through* its linked experiences.
+- [x] **Detail pages** (own URL per language, in the sitemap, with JSON-LD):
+  - [x] Experience detail: full description, bullet points, tags, linked projects and linked education.
+  - [x] Project detail: also shows the experiences it belongs to (reverse link).
+  - [x] Education detail: linked experiences (and their projects).
+  - [ ] Later: show linked projects on the Experience cards as small chips.
+- [x] **Compact lists**: the Overview and the Experience tab show basic info only (title, company, dates, short description, no bullet points) as cards that link to the detail page.
+- [x] Admin pickers for linking (search + add/remove), import/export and MCP tools carry the links.
 
 ## 9. Languages (English / Dutch)
 
