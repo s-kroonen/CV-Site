@@ -265,3 +265,11 @@ sync to until the secondary is provisioned.
   page immediately (everything is `force-dynamic` - no rebuild needed)
 - Stop the `web` container on one host and confirm NPM shows the maintenance
   page, not a raw error
+
+## Moving content between hosts / backups
+
+Admin -> Import & export (`/admin/data`) downloads a ZIP with all content
+(including archived/trashed items) and uploaded images. To seed the secondary
+host or restore a backup: open the same page there, choose the ZIP, press
+"Check file" to preview, then import (use "Replace everything" for an exact
+copy). Passkeys and contact-form messages are not part of the export.

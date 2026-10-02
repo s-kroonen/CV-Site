@@ -28,6 +28,10 @@ const cspHeader = `
   .trim();
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Admin content imports (ZIP with images) go through the proxy; default cap is 10MB.
+    proxyClientMaxBodySize: "35mb",
+  },
   async headers() {
     return [
       {

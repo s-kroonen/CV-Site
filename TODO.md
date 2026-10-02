@@ -35,8 +35,9 @@ Working list for the CV site. Tick items off as they land; add new ones at the b
   - [x] Serve through a safe route (no path traversal, correct content-type, cache headers).
   - [x] Show images on the public site (project cards/page, header avatar, logos).
   - [ ] Media library / orphan cleanup (files no longer referenced by anything), and deleting files when an entity is purged.
-- [ ] Import of other details for entities: bulk import from JSON/CSV (and maybe LinkedIn/GitHub export) with a preview + validation step before committing.
-- [ ] Export/backup of all content (JSON + uploads) for restore and migration between the two hosts.
+- [x] Bulk import (JSON or ZIP with images) with validation and a preview before anything is written; add-new or replace-all modes (`/admin/data`).
+  - [ ] Later: CSV import and LinkedIn/GitHub profile import.
+- [x] Export/backup of all content (JSON, or ZIP with uploads) for restore and migration between the two hosts.
 
 ## 4. MCP server (AI tool access)
 
