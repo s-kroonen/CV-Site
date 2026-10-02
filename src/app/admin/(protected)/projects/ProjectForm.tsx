@@ -50,7 +50,6 @@ export function ProjectForm({ item }: { item?: ProjectModel }) {
       liveUrl: data.get("liveUrl") || "",
       images,
       featured: data.get("featured") === "on",
-      status: data.get("status"),
       sortIndex: Number(data.get("sortIndex") ?? 0),
     };
 
@@ -118,18 +117,6 @@ export function ProjectForm({ item }: { item?: ProjectModel }) {
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="featured" defaultChecked={item?.featured} className="accent-[var(--accent)]" />
         Featured (shown first)
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-ink-muted">Status</span>
-        <select
-          name="status"
-          defaultValue={item?.status ?? "active"}
-          className="rounded-md border border-line bg-paper px-3 py-2 text-ink"
-        >
-          <option value="active">Active</option>
-          <option value="archived">Archived (hidden from the site)</option>
-        </select>
       </label>
 
       <Field label="Sort index" name="sortIndex" type="number" defaultValue={item?.sortIndex ?? 0} hint="Lower numbers appear first." />

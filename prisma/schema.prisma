@@ -45,6 +45,8 @@ model Experience {
   bullets     Json // string[]
   tags        Json // string[]
   sortIndex   Int       @default(0)
+  archivedAt  DateTime? // hidden from the public site, restorable
+  deletedAt   DateTime? // in the trash, restorable until purged
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -60,6 +62,8 @@ model Education {
   endDate     DateTime?
   description String?
   sortIndex   Int       @default(0)
+  archivedAt  DateTime? // hidden from the public site, restorable
+  deletedAt   DateTime? // in the trash, restorable until purged
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -77,8 +81,9 @@ model Project {
   liveUrl     String?
   images      Json // string[]
   featured    Boolean  @default(false)
-  status      String   @default("active") // "active" | "archived"
   sortIndex   Int      @default(0)
+  archivedAt  DateTime? // hidden from the public site, restorable
+  deletedAt   DateTime? // in the trash, restorable until purged
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -91,6 +96,8 @@ model Skill {
   category    String   @default("")
   proficiency Int? // 0-100, null = don't show a level
   sortIndex   Int      @default(0)
+  archivedAt  DateTime? // hidden from the public site, restorable
+  deletedAt   DateTime? // in the trash, restorable until purged
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

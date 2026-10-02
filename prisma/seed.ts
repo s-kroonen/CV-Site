@@ -66,7 +66,6 @@ async function main() {
       liveUrl: null,
       images: [],
       featured: true,
-      status: "active",
       sortIndex: 0,
     },
   });

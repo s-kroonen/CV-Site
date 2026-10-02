@@ -19,10 +19,10 @@ Working list for the CV site. Tick items off as they land; add new ones at the b
 
 ## 2. Trash & archive
 
-- [ ] **Archive**: hide outdated/irrelevant entities from the public site without deleting them (`archivedAt` on every entity); archived list in admin with restore.
-- [ ] **Trash (soft delete)**: delete moves to trash (`deletedAt`), restorable; "Empty trash"/permanent delete is a separate, confirmed action. Optional auto-purge after N days.
-- [ ] Public queries and the CV PDF exclude archived/trashed rows; admin gets filter tabs: Active / Archived / Trash.
-- [ ] Prisma migration + update every list/query touching entities.
+- [x] **Archive**: hide outdated/irrelevant entities from the public site without deleting them (`archivedAt` on every entity); archived list in admin with restore.
+- [x] **Trash (soft delete)**: delete moves to trash (`deletedAt`), restorable; "Empty trash"/permanent delete is a separate, confirmed action. Optional auto-purge after N days (not done).
+- [x] Public queries and the CV PDF exclude archived/trashed rows; admin gets filter tabs: Active / Archived / Trash.
+- [x] Prisma migration + update every list/query touching entities.
 
 ## 3. Import & media
 

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { publicWhere } from "@/lib/lifecycle";
 
 // Public data access only. PrivateContact is deliberately never exposed here -
 // see src/lib/private-contact.ts for the gated reveal flow.
@@ -8,26 +9,26 @@ export function getProfile() {
 }
 
 export function getExperience() {
-  return prisma.experience.findMany({ orderBy: { sortIndex: "asc" } });
+  return prisma.experience.findMany({ where: publicWhere, orderBy: { sortIndex: "asc" } });
 }
 
 export function getEducation() {
-  return prisma.education.findMany({ orderBy: { sortIndex: "asc" } });
+  return prisma.education.findMany({ where: publicWhere, orderBy: { sortIndex: "asc" } });
 }
 
 export function getProjects() {
   return prisma.project.findMany({
-    where: { status: "active" },
+    where: publicWhere,
     orderBy: [{ featured: "desc" }, { sortIndex: "asc" }],
   });
 }
 
 export function getProjectBySlug(slug: string) {
-  return prisma.project.findUnique({ where: { slug } });
+  return prisma.project.findFirst({ where: { slug, ...publicWhere } });
 }
 
 export function getSkills() {
-  return prisma.skill.findMany({ orderBy: [{ category: "asc" }, { sortIndex: "asc" }] });
+  return prisma.skill.findMany({ where: publicWhere, orderBy: [{ category: "asc" }, { sortIndex: "asc" }] });
 }
 
 /**

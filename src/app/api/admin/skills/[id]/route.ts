@@ -1,3 +1,4 @@
+import { applyLifecycle } from "@/lib/lifecycle";
 import { prisma } from "@/lib/prisma";
 import { skillSchema, formatZodError } from "@/lib/admin-schemas";
 
@@ -15,6 +16,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await prisma.skill.delete({ where: { id } });
+  await applyLifecycle("skills", id, "trash");
   return Response.json({ ok: true });
 }

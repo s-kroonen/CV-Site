@@ -1,3 +1,4 @@
+import { applyLifecycle } from "@/lib/lifecycle";
 import { prisma } from "@/lib/prisma";
 import { educationSchema, formatZodError } from "@/lib/admin-schemas";
 
@@ -24,6 +25,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await prisma.education.delete({ where: { id } });
+  await applyLifecycle("education", id, "trash");
   return Response.json({ ok: true });
 }

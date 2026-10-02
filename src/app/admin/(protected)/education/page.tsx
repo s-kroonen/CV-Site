@@ -1,36 +1,23 @@
-import Link from "next/link";
-import { getEducation } from "@/lib/data";
-import { DeleteButton } from "@/components/admin/DeleteButton";
+import { prisma } from "@/lib/prisma";
+import { parseView, viewCounts, viewWhere } from "@/lib/lifecycle";
+import { EntityList } from "@/components/admin/EntityList";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminEducationPage() {
-  const items = await getEducation();
+export default async function AdminEducationPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const view = parseView((await searchParams).view);
+  const [items, counts] = await Promise.all([
+    prisma.education.findMany({ where: viewWhere[view], orderBy: { sortIndex: "asc" } }),
+    viewCounts("education"),
+  ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Education</h1>
-        <Link href="/admin/education/new" className="text-sm underline underline-offset-4">
-          + Add
-        </Link>
-      </div>
-      <ul className="flex flex-col gap-3">
-        {items.map((item) => (
-          <li key={item.id} className="flex items-center justify-between rounded-md border border-line px-4 py-3">
-            <span>
-              {[item.degree, item.institution].filter(Boolean).join(" · ")}
-            </span>
-            <div className="flex gap-4">
-              <Link href={`/admin/education/${item.id}`} className="text-sm underline underline-offset-4">
-                Edit
-              </Link>
-              <DeleteButton endpoint={`/api/admin/education/${item.id}`} confirmText={`Delete "${item.degree || item.institution}"?`} />
-            </div>
-          </li>
-        ))}
-        {items.length === 0 && <p className="opacity-60">No entries yet.</p>}
-      </ul>
-    </main>
+    <EntityList
+      entity="education"
+      title="Education"
+      view={view}
+      counts={counts}
+      items={items.map((item) => ({ id: item.id, label: [item.degree, item.institution].filter(Boolean).join(" · ") || "(untitled)" }))}
+    />
   );
 }

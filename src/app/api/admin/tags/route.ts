@@ -19,12 +19,12 @@ export async function GET(request: Request) {
   };
 
   if (pool === "categories") {
-    const skills = await prisma.skill.findMany({ select: { category: true } });
+    const skills = await prisma.skill.findMany({ where: { deletedAt: null }, select: { category: true } });
     skills.forEach((s) => add(s.category));
   } else {
     const [experience, projects] = await Promise.all([
-      prisma.experience.findMany({ select: { tags: true } }),
-      prisma.project.findMany({ select: { techStack: true } }),
+      prisma.experience.findMany({ where: { deletedAt: null }, select: { tags: true } }),
+      prisma.project.findMany({ where: { deletedAt: null }, select: { techStack: true } }),
     ]);
     experience.forEach((e) => asStringArray(e.tags).forEach(add));
     projects.forEach((p) => asStringArray(p.techStack).forEach(add));

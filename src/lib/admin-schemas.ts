@@ -77,7 +77,6 @@ export const projectSchema = z.object({
   liveUrl: optionalUrl,
   images: z.array(z.string().max(500)).default([]),
   featured: z.boolean().default(false),
-  status: z.enum(["active", "archived"]).default("active"),
   sortIndex: z.number().int().default(0),
 });
 

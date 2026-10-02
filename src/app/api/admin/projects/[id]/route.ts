@@ -1,4 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
+import { applyLifecycle } from "@/lib/lifecycle";
 import { prisma } from "@/lib/prisma";
 import { projectSchema, formatZodError } from "@/lib/admin-schemas";
 import { slugify, uniqueProjectSlug } from "@/lib/slug";
@@ -31,6 +32,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await prisma.project.delete({ where: { id } });
+  await applyLifecycle("projects", id, "trash");
   return Response.json({ ok: true });
 }
