@@ -2,7 +2,11 @@
 
 Working list for the CV site. Tick items off as they land; add new ones at the bottom of the relevant section.
 
-## 1. Admin form fixes (do first)
+## 0. Bugs
+
+- [ ] **"Show phone / private email" reveals nothing** (button clicks, nothing appears; the contact form's Turnstile is likely affected too). Probable cause: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is inlined at build time, and the CI/Docker build has no value for it, so `<Turnstile>` renders `null` in production. Fix by passing the site key at runtime (read it in a server component and hand it to the client component as a prop) instead of a build-time `NEXT_PUBLIC_` var. Also show a visible error/fallback when the widget can't load (blocked script, missing key) instead of silence, and verify `TURNSTILE_SECRET_KEY` + hostname allow-list in the Cloudflare widget.
+
+## 1. Admin form fixes (done)
 
 - [x] **Optional fields**: audit every admin form (profile, experience, education, projects, skills). Only truly required fields (e.g. a title/name) should block saving; everything else may be left empty.
   - [x] Relax validation (zod/server-side) and make DB columns nullable where needed (Prisma migration).
@@ -45,7 +49,12 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 - [ ] Docs: how to connect (Claude Desktop/Code config snippet) in `docs/`.
 - [ ] Tests for tools, auth failures and scope enforcement.
 
-## 5. Visual design
+## 5. Visual design / layout
+
+- [ ] **Tabbed page layout** (modelled on CV/personal sites like a simple LinkedIn profile or personal blog, but lighter and more personal): replace the single long scroll with tabs/pages - a default **Overview/Home** (hero, short about, highlights), plus **Experience**, **Projects**, **Skills**, **Education**, **Contact** (own URLs such as `/experience`, `/contact` so each is linkable and indexable). Sticky top nav with the active tab highlighted; keep it usable on mobile (scrollable tab bar or menu).
+- [ ] **Light mode**: proper light theme (currently only follows the OS) with a manual light/dark toggle in the nav, remembered per visitor; keep the existing colour palette in both. Audit contrast.
+- [ ] Profile-style details borrowed from LinkedIn/blog layouts, kept simple: profile header with avatar, headline, location and quick links; skill chips; experience as a clean timeline with company logos; featured projects; "last updated" note.
+- [ ] Small UI polish pass: spacing, typography scale, consistent buttons and cards, focus states, hover/scroll animations kept subtle.
 
 - [ ] Background is bland: keep the current colour palette but add depth (layered gradients/mesh, subtle grain/noise, soft glows, section-aware backgrounds, parallax or scroll-linked movement).
 - [ ] Respect `prefers-reduced-motion` and keep contrast/readability; check performance on low-end devices.
