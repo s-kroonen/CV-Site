@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Script from "next/script";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 declare global {
   interface Window {
@@ -29,6 +30,7 @@ export function Turnstile({ siteKey, onVerify }: { siteKey: string; onVerify: (t
   const containerRef = useRef<HTMLDivElement>(null);
   const renderedRef = useRef(false);
   const [failed, setFailed] = useState(false);
+  const { t } = useLocale();
 
   function renderWidget() {
     if (renderedRef.current || !containerRef.current || !window.turnstile) return;
@@ -53,7 +55,7 @@ export function Turnstile({ siteKey, onVerify }: { siteKey: string; onVerify: (t
       <div ref={containerRef} />
       {failed && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          The human check could not load. Disable any content blocker for this site and reload, or email me directly.
+          {t.contact.humanCheckFailed}
         </p>
       )}
     </>

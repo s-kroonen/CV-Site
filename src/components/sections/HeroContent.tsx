@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import type { SocialLink } from "@/lib/json";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 export function HeroContent({
   avatarPath,
@@ -19,6 +20,7 @@ export function HeroContent({
   links: SocialLink[];
 }) {
   const reduceMotion = useReducedMotion();
+  const { lang, t } = useLocale();
   const item = (delay: number) => ({
     initial: reduceMotion ? undefined : { opacity: 0, y: 18 },
     animate: reduceMotion ? undefined : { opacity: 1, y: 0 },
@@ -75,10 +77,10 @@ export function HeroContent({
       </motion.div>
       <motion.div {...item(0.32)}>
         <a
-          href="/api/cv"
+          href={`/api/cv?lang=${lang}`}
           className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-line px-4 py-2 text-sm transition-colors hover:border-accent hover:text-accent"
         >
-          Download CV (PDF)
+          {t.common.downloadCv}
         </a>
       </motion.div>
     </div>

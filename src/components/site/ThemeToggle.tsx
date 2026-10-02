@@ -22,7 +22,7 @@ function subscribe(onChange: () => void) {
 }
 
 /** Light/dark switch. Defaults to the OS setting until the visitor picks one; the pick is remembered. */
-export function ThemeToggle() {
+export function ThemeToggle({ labels }: { labels?: { toLight: string; toDark: string } }) {
   // Server snapshot is a fixed value; the real theme is read on the client after hydration.
   const theme = useSyncExternalStore<Theme | null>(subscribe, currentTheme, () => null);
 
@@ -36,7 +36,7 @@ export function ThemeToggle() {
     }
   }
 
-  const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  const label = theme === "dark" ? (labels?.toLight ?? "Switch to light mode") : (labels?.toDark ?? "Switch to dark mode");
 
   return (
     <button

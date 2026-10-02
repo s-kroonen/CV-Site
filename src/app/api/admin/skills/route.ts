@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { saveAdminTranslation } from "@/lib/admin-translation";
 import { skillSchema, formatZodError } from "@/lib/admin-schemas";
 
 export async function POST(request: Request) {
@@ -9,5 +10,6 @@ export async function POST(request: Request) {
   }
 
   const created = await prisma.skill.create({ data: parsed.data });
-  return Response.json(created, { status: 201 });
+  const translation = await saveAdminTranslation("skills", created.id, created, json);
+  return Response.json({ ...created, translation }, { status: 201 });
 }

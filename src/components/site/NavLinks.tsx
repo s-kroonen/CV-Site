@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 export type NavTab = { href: string; label: string };
 
 /** Tab-style primary navigation. Scrolls sideways on narrow screens instead of wrapping. */
-export function NavLinks({ tabs }: { tabs: NavTab[] }) {
+export function NavLinks({ tabs, label }: { tabs: NavTab[]; label: string }) {
   const pathname = usePathname();
   const activeRef = useRef<HTMLAnchorElement>(null);
 
@@ -16,10 +16,11 @@ export function NavLinks({ tabs }: { tabs: NavTab[] }) {
     activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [pathname]);
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`));
+  const home = tabs[0]?.href;
+  const isActive = (href: string) => (href === home ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
 
   return (
-    <nav aria-label="Primary" className="-mb-px flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav aria-label={label} className="-mb-px flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {tabs.map((tab) => {
         const active = isActive(tab.href);
         return (

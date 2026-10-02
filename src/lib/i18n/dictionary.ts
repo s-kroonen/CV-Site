@@ -1,0 +1,167 @@
+import type { Locale } from "./config";
+
+// Interface text of the public site. (Your own content is translated separately,
+// see lib/translations.ts.) Values are plain strings so the dictionary can be passed
+// to client components; {placeholders} are filled by fmt().
+
+const en = {
+  nav: {
+    label: "Primary",
+    overview: "Overview",
+    experience: "Experience",
+    projects: "Projects",
+    skills: "Skills",
+    education: "Education",
+    contact: "Contact",
+  },
+  sections: {
+    about: "About",
+    experience: "Experience",
+    education: "Education",
+    projects: "Projects",
+    skills: "Skills",
+    contact: "Contact",
+    getInTouch: "Get in touch",
+  },
+  common: {
+    viewAll: "View all →",
+    all: "All",
+    present: "Present",
+    until: "Until",
+    downloadCv: "Download CV (PDF)",
+    backToProjects: "← Back to projects",
+    repository: "Repository",
+    liveSite: "Live site",
+    contactMe: "Contact me",
+    getInTouchText: "Have a question or a project in mind? I'd like to hear about it.",
+    language: "Language",
+    switchToLight: "Switch to light mode",
+    switchToDark: "Switch to dark mode",
+    notSetUp: "Site content hasn't been set up yet.",
+    notFoundTitle: "Page not found",
+    notFoundText: "This page doesn't exist (any more).",
+    backHome: "Back to the home page",
+    screenshot: "{title} screenshot {n}",
+    footer: "© {year} {name}",
+  },
+  contact: {
+    introWithEmail: "For business inquiries, use the form below or email",
+    introNoEmail: "For business inquiries, use the form below.",
+    reveal: "Show phone / private email",
+    revealError: "Could not verify. Please try again.",
+    name: "Name",
+    email: "Email",
+    message: "Message",
+    send: "Send message",
+    sending: "Sending…",
+    thanks: "Thanks — your message has been sent. I'll reply by email.",
+    error: "Something went wrong. Please try again.",
+    humanCheckFailed:
+      "The human check could not load. Disable any content blocker for this site and reload, or email me directly.",
+  },
+  md: {
+    location: "Location",
+    email: "Email",
+    website: "Website",
+    tags: "Tags",
+    tech: "Tech",
+    repository: "Repository",
+    live: "Live",
+    other: "Other",
+  },
+  meta: {
+    role: "CV & portfolio",
+    experienceDescription: "Work experience of {name}: {list}",
+    educationDescription: "Education of {name}: {list}",
+    projectsDescription: "Projects by {name}: {list}",
+    skillsDescription: "Skills of {name}: {list}",
+    contactDescription: "Get in touch using the contact form.",
+    projectNotFound: "Project not found",
+  },
+};
+
+export type Dictionary = typeof en;
+
+const nl: Dictionary = {
+  nav: {
+    label: "Hoofdmenu",
+    overview: "Overzicht",
+    experience: "Ervaring",
+    projects: "Projecten",
+    skills: "Vaardigheden",
+    education: "Opleiding",
+    contact: "Contact",
+  },
+  sections: {
+    about: "Over mij",
+    experience: "Ervaring",
+    education: "Opleiding",
+    projects: "Projecten",
+    skills: "Vaardigheden",
+    contact: "Contact",
+    getInTouch: "Neem contact op",
+  },
+  common: {
+    viewAll: "Bekijk alles →",
+    all: "Alles",
+    present: "heden",
+    until: "Tot",
+    downloadCv: "Download CV (PDF)",
+    backToProjects: "← Terug naar projecten",
+    repository: "Repository",
+    liveSite: "Live site",
+    contactMe: "Neem contact op",
+    getInTouchText: "Heb je een vraag of een project in gedachten? Ik hoor het graag.",
+    language: "Taal",
+    switchToLight: "Schakel naar lichte modus",
+    switchToDark: "Schakel naar donkere modus",
+    notSetUp: "De inhoud van deze site is nog niet ingesteld.",
+    notFoundTitle: "Pagina niet gevonden",
+    notFoundText: "Deze pagina bestaat niet (meer).",
+    backHome: "Terug naar de startpagina",
+    screenshot: "{title} schermafbeelding {n}",
+    footer: "© {year} {name}",
+  },
+  contact: {
+    introWithEmail: "Voor zakelijke vragen: gebruik het formulier hieronder of mail naar",
+    introNoEmail: "Voor zakelijke vragen: gebruik het formulier hieronder.",
+    reveal: "Toon telefoonnummer / privé-e-mail",
+    revealError: "Verificatie mislukt. Probeer het opnieuw.",
+    name: "Naam",
+    email: "E-mail",
+    message: "Bericht",
+    send: "Verstuur bericht",
+    sending: "Versturen…",
+    thanks: "Bedankt — je bericht is verstuurd. Ik antwoord per e-mail.",
+    error: "Er ging iets mis. Probeer het opnieuw.",
+    humanCheckFailed:
+      "De menselijke controle kon niet laden. Zet een eventuele contentblokker voor deze site uit en laad de pagina opnieuw, of mail me direct.",
+  },
+  md: {
+    location: "Locatie",
+    email: "E-mail",
+    website: "Website",
+    tags: "Tags",
+    tech: "Techniek",
+    repository: "Repository",
+    live: "Live",
+    other: "Overig",
+  },
+  meta: {
+    role: "CV & portfolio",
+    experienceDescription: "Werkervaring van {name}: {list}",
+    educationDescription: "Opleiding van {name}: {list}",
+    projectsDescription: "Projecten van {name}: {list}",
+    skillsDescription: "Vaardigheden van {name}: {list}",
+    contactDescription: "Neem contact op via het contactformulier.",
+    projectNotFound: "Project niet gevonden",
+  },
+};
+
+const dictionaries: Record<Locale, Dictionary> = { en, nl };
+export const getDictionary = (lang: Locale): Dictionary => dictionaries[lang];
+
+/** Fills {placeholders}: fmt("Hi {name}", { name: "Storm" }). */
+export function fmt(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (m, key) => (key in values ? String(values[key]) : m));
+}

@@ -9,6 +9,7 @@ export function formatZodError(error: z.ZodError): string {
 // blank); everything else may be left empty. Empty strings are accepted
 // wherever the DB stores text, and public pages skip empty values.
 
+const sourceLang = z.enum(["en", "nl"]).default("en");
 const optionalText = (max: number) => z.string().trim().max(max).default("");
 const optionalDate = z
   .string()
@@ -20,6 +21,7 @@ const optionalEmail = z.union([z.literal(""), z.string().trim().email().max(320)
 const optionalUrl = z.union([z.literal(""), z.string().trim().url().max(2000)]).nullable().optional();
 
 export const profileSchema = z.object({
+  sourceLang,
   name: z.string().trim().min(1, "Name is required").max(200),
   tagline: optionalText(300),
   bio: optionalText(10000),
@@ -37,6 +39,7 @@ export const privateContactSchema = z.object({
 
 export const experienceSchema = z
   .object({
+    sourceLang,
     company: optionalText(200),
     title: optionalText(200),
     location: z.string().trim().max(200).nullable().optional(),
@@ -52,6 +55,7 @@ export const experienceSchema = z
 
 export const educationSchema = z
   .object({
+    sourceLang,
     institution: optionalText(200),
     degree: optionalText(200),
     field: z.string().trim().max(200).nullable().optional(),
@@ -64,6 +68,7 @@ export const educationSchema = z
   .refine((v) => v.institution || v.degree, { message: "Enter an institution or a degree", path: ["institution"] });
 
 export const projectSchema = z.object({
+  sourceLang,
   title: z.string().trim().min(1, "Title is required").max(200),
   // Blank = generated from the title by the API route.
   slug: z
@@ -96,6 +101,7 @@ export const projectSchema = z.object({
 });
 
 export const skillSchema = z.object({
+  sourceLang,
   name: z.string().trim().min(1, "Name is required").max(100),
   category: optionalText(100),
   proficiency: z.number().int().min(0).max(100).nullable().optional(),

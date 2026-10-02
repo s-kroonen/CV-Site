@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { asImages, asStringArray } from "@/lib/json";
 import type { ProjectModel as Project } from "@/generated/prisma/models";
 import { SectionHeading } from "@/components/site/SectionHeading";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 import { FadeInView } from "@/components/motion/FadeInView";
 
 export function ProjectsSection({
@@ -22,6 +23,7 @@ export function ProjectsSection({
   const items = limit ? allItems.slice(0, limit) : allItems;
   const hasMore = allItems.length > items.length;
   const reduceMotion = useReducedMotion();
+  const { t, href } = useLocale();
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const allTags = useMemo(() => {
@@ -42,7 +44,7 @@ export function ProjectsSection({
     <FadeInView>
       <section id="projects" className="flex flex-col gap-8 py-16">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <SectionHeading title="Projects" asPage={asPage} moreHref={hasMore ? moreHref : undefined} />
+          <SectionHeading title={t.sections.projects} asPage={asPage} moreHref={hasMore ? moreHref : undefined} moreLabel={t.common.viewAll} />
           {!limit && allTags.length > 1 && (
             <div className="flex flex-wrap gap-2">
               <button
@@ -51,7 +53,7 @@ export function ProjectsSection({
                   activeTag === null ? "border-accent bg-accent text-accent-ink" : "border-line text-ink-muted"
                 }`}
               >
-                All
+                {t.common.all}
               </button>
               {allTags.map((tag) => (
                 <button
@@ -84,7 +86,7 @@ export function ProjectsSection({
                   transition={{ duration: 0.3 }}
                 >
                   <Link
-                    href={`/projects/${project.slug}`}
+                    href={href(`/projects/${project.slug}`)}
                     className="flex h-full flex-col gap-2 rounded-lg border border-line p-5 shadow-sm transition-shadow hover:shadow-md"
                   >
                     {cover && (

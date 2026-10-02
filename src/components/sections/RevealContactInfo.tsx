@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Turnstile } from "@/components/Turnstile";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 type State = "hidden" | "verifying" | "revealed" | "error";
 
 export function RevealContactInfo({ turnstileSiteKey }: { turnstileSiteKey?: string }) {
+  const { t } = useLocale();
   const [state, setState] = useState<State>("hidden");
   const [info, setInfo] = useState<{ email: string; phone: string } | null>(null);
 
@@ -42,7 +44,7 @@ export function RevealContactInfo({ turnstileSiteKey }: { turnstileSiteKey?: str
         onClick={() => (turnstileSiteKey ? setState("verifying") : handleVerified(""))}
         className="w-fit text-sm text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent"
       >
-        Show phone / private email
+        {t.contact.reveal}
       </button>
     );
   }
@@ -50,7 +52,7 @@ export function RevealContactInfo({ turnstileSiteKey }: { turnstileSiteKey?: str
   return (
     <div className="flex flex-col gap-2">
       {turnstileSiteKey && <Turnstile siteKey={turnstileSiteKey} onVerify={handleVerified} />}
-      {state === "error" && <p className="text-sm text-red-500">Could not verify. Please try again.</p>}
+      {state === "error" && <p className="text-sm text-red-500">{t.contact.revealError}</p>}
     </div>
   );
 }

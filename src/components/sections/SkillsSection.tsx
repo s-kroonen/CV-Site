@@ -3,12 +3,12 @@
 import { motion, useReducedMotion } from "framer-motion";
 import type { SkillModel as Skill } from "@/generated/prisma/models";
 import { SectionHeading } from "@/components/site/SectionHeading";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 import { FadeInView } from "@/components/motion/FadeInView";
 
 export function SkillsSection({ items, asPage = false }: { items: Skill[]; asPage?: boolean }) {
   const reduceMotion = useReducedMotion();
-  const hasMore = false;
-  const moreHref = undefined;
+  const { t } = useLocale();
   if (items.length === 0) return null;
 
   const byCategory = new Map<string, Skill[]>();
@@ -22,7 +22,7 @@ export function SkillsSection({ items, asPage = false }: { items: Skill[]; asPag
   return (
     <FadeInView>
       <section id="skills" className="flex flex-col gap-8 py-16">
-        <SectionHeading title="Skills" asPage={asPage} moreHref={hasMore ? moreHref : undefined} />
+        <SectionHeading title={t.sections.skills} asPage={asPage} />
         <div className="grid gap-8 sm:grid-cols-2">
           {[...byCategory.entries()].map(([category, skills]) => (
             <div key={category} className="flex flex-col gap-3">

@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { applyLifecycle } from "@/lib/lifecycle";
 import { prisma } from "@/lib/prisma";
+import { saveAdminTranslation } from "@/lib/admin-translation";
 import { projectSchema, formatZodError } from "@/lib/admin-schemas";
 import { slugify, uniqueProjectSlug } from "@/lib/slug";
 
@@ -21,7 +22,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       where: { id },
       data: { ...rest, slug: finalSlug, repoUrl: repoUrl || null, liveUrl: liveUrl || null },
     });
-    return Response.json(updated);
+    const translation = await saveAdminTranslation("projects", id, updated, json);
+    return Response.json({ ...updated, translation });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       return Response.json({ error: "That slug is already in use." }, { status: 409 });

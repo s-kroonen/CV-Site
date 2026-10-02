@@ -31,6 +31,7 @@ type Delegate = {
   delete(args: { where: { id: string } }): Promise<unknown>;
   deleteMany(args: { where: Record<string, unknown> }): Promise<{ count: number }>;
   count(args: { where: Record<string, unknown> }): Promise<number>;
+  findMany(args: { where: Record<string, unknown>; select: { id: true } }): Promise<{ id: string }[]>;
 };
 
 function delegate(entity: Entity): Delegate {
@@ -65,12 +66,16 @@ export async function applyLifecycle(entity: Entity, id: string, action: Lifecyc
       return;
     case "purge":
       await d.delete({ where: { id } });
+      await prisma.translation.deleteMany({ where: { entity, entityId: id } });
       return;
   }
 }
 
 export async function emptyTrash(entity: Entity): Promise<number> {
-  const { count } = await delegate(entity).deleteMany({ where: viewWhere.trash });
+  const d = delegate(entity);
+  const ids = (await d.findMany({ where: viewWhere.trash, select: { id: true } })).map((r) => r.id);
+  const { count } = await d.deleteMany({ where: viewWhere.trash });
+  await prisma.translation.deleteMany({ where: { entity, entityId: { in: ids } } });
   return count;
 }
 

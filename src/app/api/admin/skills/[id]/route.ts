@@ -1,5 +1,6 @@
 import { applyLifecycle } from "@/lib/lifecycle";
 import { prisma } from "@/lib/prisma";
+import { saveAdminTranslation } from "@/lib/admin-translation";
 import { skillSchema, formatZodError } from "@/lib/admin-schemas";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,7 +12,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const updated = await prisma.skill.update({ where: { id }, data: parsed.data });
-  return Response.json(updated);
+  const translation = await saveAdminTranslation("skills", id, updated, json);
+  return Response.json({ ...updated, translation });
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {

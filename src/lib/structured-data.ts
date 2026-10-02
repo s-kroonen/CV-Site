@@ -1,16 +1,17 @@
 import type { EducationModel, ExperienceModel, ProfileModel } from "@/generated/prisma/models";
 import { asSocialLinks } from "@/lib/json";
 import { absoluteUrl, siteUrl } from "@/lib/seo";
+import { localizedPath, type Locale } from "@/lib/i18n/config";
 
 /** schema.org Person (as a ProfilePage) for the home page. Only data that is already public. */
-export function personJsonLd(profile: ProfileModel, experience: ExperienceModel[], education: EducationModel[]) {
+export function personJsonLd(profile: ProfileModel, experience: ExperienceModel[], education: EducationModel[], lang: Locale) {
   const links = asSocialLinks(profile.socialLinks).map((l) => l.url);
   const current = experience.find((e) => !e.endDate && e.company);
   const person = {
     "@type": "Person",
     "@id": `${siteUrl()}/#person`,
     name: profile.name,
-    url: absoluteUrl("/"),
+    url: absoluteUrl(localizedPath(lang, "/")),
     jobTitle: profile.tagline || undefined,
     description: profile.bio || undefined,
     email: profile.publicEmail ? `mailto:${profile.publicEmail}` : undefined,
@@ -30,7 +31,8 @@ export function personJsonLd(profile: ProfileModel, experience: ExperienceModel[
       {
         "@type": "ProfilePage",
         "@id": `${siteUrl()}/#profile`,
-        url: absoluteUrl("/"),
+        url: absoluteUrl(localizedPath(lang, "/")),
+        inLanguage: lang,
         name: profile.name,
         mainEntity: { "@id": person["@id"] },
       },
@@ -38,6 +40,7 @@ export function personJsonLd(profile: ProfileModel, experience: ExperienceModel[
         "@type": "WebSite",
         "@id": `${siteUrl()}/#website`,
         url: absoluteUrl("/"),
+        inLanguage: ["en", "nl"],
         name: profile.name,
         publisher: { "@id": person["@id"] },
       },

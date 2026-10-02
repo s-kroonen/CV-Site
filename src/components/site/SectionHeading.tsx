@@ -5,10 +5,12 @@ export function SectionHeading({
   title,
   asPage = false,
   moreHref,
+  moreLabel,
 }: {
   title: string;
   asPage?: boolean;
   moreHref?: string;
+  moreLabel?: string;
 }) {
   const className = "font-[family-name:var(--font-display)] text-3xl font-medium";
   return (
@@ -16,7 +18,7 @@ export function SectionHeading({
       {asPage ? <h1 className={className}>{title}</h1> : <h2 className={className}>{title}</h2>}
       {moreHref && (
         <Link href={moreHref} className="text-sm text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent">
-          View all →
+          {moreLabel ?? "View all →"}
         </Link>
       )}
     </div>

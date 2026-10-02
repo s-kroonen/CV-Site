@@ -20,6 +20,8 @@ import {
   skillSchema,
 } from "@/lib/admin-schemas";
 import { slugify } from "@/lib/slug";
+import { hasContent, sanitizeFields, type FieldValues, type TEntity } from "@/lib/translations";
+import { isLocale } from "@/lib/i18n/config";
 import { uploadDir } from "@/lib/uploads";
 
 // Content export/import. The same document shape is used for both directions,
@@ -54,15 +56,27 @@ export async function buildExport(includePrivate: boolean): Promise<ExportDoc> {
     prisma.skill.findMany({ orderBy: { sortIndex: "asc" } }),
   ]);
 
+  // Translations travel inside the item they belong to ({ nl: { fields..., manual } }).
+  const all = await prisma.translation.findMany();
+  const byItem = new Map<string, Record<string, Row>>();
+  for (const t of all) {
+    const key = `${t.entity}:${t.entityId}`;
+    byItem.set(key, { ...(byItem.get(key) ?? {}), [t.lang]: { ...(t.fields as Row), manual: t.manual } });
+  }
+  const withTranslations = (entity: string, id: string, exported: Row): Row => {
+    const t = byItem.get(`${entity}:${id}`);
+    return t ? { ...exported, translations: t } : exported;
+  };
+
   return {
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    profile: profile && serializeProfile(profile),
+    profile: profile && withTranslations("profile", "1", serializeProfile(profile)),
     privateContact: privateContact && { email: privateContact.email, phone: privateContact.phone },
-    experience: experience.map((r) => serializeExperience(r)),
-    education: education.map((r) => serializeEducation(r)),
-    projects: projects.map((r) => serializeProject(r)),
-    skills: skills.map((r) => serializeSkill(r)),
+    experience: experience.map((r) => withTranslations("experience", r.id, serializeExperience(r))),
+    education: education.map((r) => withTranslations("education", r.id, serializeEducation(r))),
+    projects: projects.map((r) => withTranslations("projects", r.id, serializeProject(r))),
+    skills: skills.map((r) => withTranslations("skills", r.id, serializeSkill(r))),
   };
 }
 
@@ -134,16 +148,30 @@ export function parseImportFile(buf: Uint8Array, filename: string): ParsedImport
 }
 
 type Dates = { archivedAt: Date | null; deletedAt: Date | null };
+type PreparedTranslation = { lang: string; fields: FieldValues; manual: boolean };
+type PreparedItem = { key: string; data: Row & Dates; translations: PreparedTranslation[] };
 export type Prepared = {
   profile?: z.infer<typeof profileSchema>;
+  profileTranslations: PreparedTranslation[];
   privateContact?: z.infer<typeof privateContactSchema>;
-  experience: Array<{ key: string; data: Row & Dates }>;
-  education: Array<{ key: string; data: Row & Dates }>;
-  projects: Array<{ key: string; data: Row & Dates }>;
-  skills: Array<{ key: string; data: Row & Dates }>;
+  experience: PreparedItem[];
+  education: PreparedItem[];
+  projects: PreparedItem[];
+  skills: PreparedItem[];
   errors: string[];
   uploads: { found: number; missing: string[] };
 };
+
+/** Reads the translations embedded in an exported item and validates them. */
+function translationsOf(entity: TEntity, raw: unknown): PreparedTranslation[] {
+  const obj = raw && typeof raw === "object" ? (raw as Record<string, unknown>).translations : undefined;
+  if (!obj || typeof obj !== "object") return [];
+  return Object.entries(obj as Record<string, unknown>).flatMap(([lang, v]) => {
+    if (!isLocale(lang) || !v || typeof v !== "object") return [];
+    const fields = sanitizeFields(entity, v);
+    return hasContent(fields) ? [{ lang, fields, manual: (v as Record<string, unknown>).manual !== false }] : [];
+  });
+}
 
 const toDate = (v: string | null | undefined) => (v ? new Date(v) : null);
 const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
@@ -158,7 +186,7 @@ function lifeOf(raw: unknown): Dates {
 /** Validates every record in an import document with the same schemas the admin forms use. */
 export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>): Prepared {
   const errors: string[] = [];
-  const out: Prepared = { experience: [], education: [], projects: [], skills: [], errors, uploads: { found: 0, missing: [] } };
+  const out: Prepared = { profileTranslations: [], experience: [], education: [], projects: [], skills: [], errors, uploads: { found: 0, missing: [] } };
 
   const shape = docShape.safeParse(rawDoc);
   if (!shape.success || typeof rawDoc !== "object" || rawDoc === null) {
@@ -175,7 +203,10 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
 
   if (doc.profile) {
     const p = profileSchema.safeParse(doc.profile);
-    if (p.success) out.profile = p.data;
+    if (p.success) {
+      out.profile = p.data;
+      out.profileTranslations = translationsOf("profile", doc.profile);
+    }
     else errors.push(`profile: ${describe(p.error)}`);
   }
   if (doc.privateContact) {
@@ -191,6 +222,7 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
     out.experience.push({
       key: [norm(r.data.title), norm(r.data.company), norm(startDate)].join("|"),
       data: { ...rest, startDate: toDate(startDate), endDate: toDate(endDate), ...lifeOf(raw) },
+      translations: translationsOf("experience", raw),
     });
   });
   doc.education.forEach((raw, i) => {
@@ -200,6 +232,7 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
     out.education.push({
       key: [norm(r.data.institution), norm(r.data.degree)].join("|"),
       data: { ...rest, startDate: toDate(startDate), endDate: toDate(endDate), ...lifeOf(raw) },
+      translations: translationsOf("education", raw),
     });
   });
   const slugsInFile = new Set<string>();
@@ -213,6 +246,7 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
     out.projects.push({
       key: slug,
       data: { ...rest, slug, repoUrl: repoUrl || null, liveUrl: liveUrl || null, ...lifeOf(raw) },
+      translations: translationsOf("projects", raw),
     });
   });
   doc.skills.forEach((raw, i) => {
@@ -221,6 +255,7 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
     out.skills.push({
       key: [norm(r.data.name), norm(r.data.category)].join("|"),
       data: { ...r.data, proficiency: r.data.proficiency ?? null, ...lifeOf(raw) },
+      translations: translationsOf("skills", raw),
     });
   });
 
@@ -262,7 +297,7 @@ export async function planImport(p: Prepared, mode: ImportMode, includeProfile: 
     skills: new Set(existing?.skills.map((r) => [norm(r.name), norm(r.category)].join("|"))),
   };
 
-  const toCreate = {} as Record<Section, Array<{ key: string; data: Row & Dates }>>;
+  const toCreate = {} as Record<Section, PreparedItem[]>;
   const summary = { profile: includeProfile && !!p.profile } as ImportSummary;
   for (const s of SECTIONS) {
     const items = p[s];
@@ -292,15 +327,34 @@ export async function applyImport(
       await tx.education.deleteMany();
       await tx.project.deleteMany();
       await tx.skill.deleteMany();
+      await tx.translation.deleteMany();
     }
+    const saveTranslations = async (entity: TEntity, id: string, items: PreparedTranslation[]) => {
+      for (const t of items) {
+        await tx.translation.upsert({
+          where: { entity_entityId_lang: { entity, entityId: id, lang: t.lang } },
+          create: { entity, entityId: id, lang: t.lang, fields: t.fields, manual: t.manual },
+          update: { fields: t.fields, manual: t.manual },
+        });
+      }
+    };
     // `as never`: rows were validated by the same zod schemas the admin API uses.
-    for (const it of toCreate.experience) await tx.experience.create({ data: it.data as never });
-    for (const it of toCreate.education) await tx.education.create({ data: it.data as never });
-    for (const it of toCreate.projects) await tx.project.create({ data: it.data as never });
-    for (const it of toCreate.skills) await tx.skill.create({ data: it.data as never });
+    for (const it of toCreate.experience) {
+      await saveTranslations("experience", (await tx.experience.create({ data: it.data as never })).id, it.translations);
+    }
+    for (const it of toCreate.education) {
+      await saveTranslations("education", (await tx.education.create({ data: it.data as never })).id, it.translations);
+    }
+    for (const it of toCreate.projects) {
+      await saveTranslations("projects", (await tx.project.create({ data: it.data as never })).id, it.translations);
+    }
+    for (const it of toCreate.skills) {
+      await saveTranslations("skills", (await tx.skill.create({ data: it.data as never })).id, it.translations);
+    }
 
     if (includeProfile && p.profile) {
       await tx.profile.upsert({ where: { id: 1 }, create: { id: 1, ...p.profile }, update: p.profile });
+      await saveTranslations("profile", "1", p.profileTranslations);
     }
     if (includeProfile && p.privateContact) {
       await tx.privateContact.upsert({ where: { id: 1 }, create: { id: 1, ...p.privateContact }, update: p.privateContact });

@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { asStringArray } from "@/lib/json";
 import { formatDateRange } from "@/lib/format";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 import type { ExperienceModel as Experience } from "@/generated/prisma/models";
 import { SectionHeading } from "@/components/site/SectionHeading";
 import { FadeInView } from "@/components/motion/FadeInView";
@@ -19,6 +20,7 @@ export function ExperienceSection({
   moreHref?: string;
 }) {
   const reduceMotion = useReducedMotion();
+  const { lang, t } = useLocale();
   if (allItems.length === 0) return null;
   const items = limit ? allItems.slice(0, limit) : allItems;
   const hasMore = allItems.length > items.length;
@@ -26,7 +28,7 @@ export function ExperienceSection({
   return (
     <FadeInView>
       <section id="experience" className="flex flex-col gap-8 py-16">
-        <SectionHeading title="Experience" asPage={asPage} moreHref={hasMore ? moreHref : undefined} />
+        <SectionHeading title={t.sections.experience} asPage={asPage} moreHref={hasMore ? moreHref : undefined} moreLabel={t.common.viewAll} />
         <ol className="relative flex flex-col gap-10 pl-6">
           <motion.div
             aria-hidden="true"
@@ -39,7 +41,7 @@ export function ExperienceSection({
           {items.map((item, index) => {
             const bullets = asStringArray(item.bullets);
             const tags = asStringArray(item.tags);
-            const dateRange = formatDateRange(item.startDate, item.endDate);
+            const dateRange = formatDateRange(item.startDate, item.endDate, lang, t.common);
             return (
               <motion.li
                 key={item.id}

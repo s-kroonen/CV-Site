@@ -14,6 +14,7 @@ datasource db {
 model Profile {
   id          Int      @id @default(1)
   name        String
+  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
   tagline     String   @default("")
   bio         String   @default("")
   publicEmail String   @default("")
@@ -36,6 +37,7 @@ model PrivateContact {
 
 model Experience {
   id          String    @id @default(cuid())
+  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
   company     String    @default("")
   title       String    @default("")
   location    String?
@@ -56,6 +58,7 @@ model Experience {
 
 model Education {
   id          String    @id @default(cuid())
+  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
   institution String    @default("")
   degree      String    @default("")
   field       String?
@@ -74,6 +77,7 @@ model Education {
 
 model Project {
   id          String   @id @default(cuid())
+  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
   title       String
   slug        String   @unique
   summary     String   @default("")
@@ -94,6 +98,7 @@ model Project {
 
 model Skill {
   id          String   @id @default(cuid())
+  sourceLang  String   @default("en") // language the base text fields are written in ("en" | "nl")
   name        String
   category    String   @default("")
   proficiency Int? // 0-100, null = don't show a level
@@ -195,4 +200,19 @@ model OAuthGrant {
   lastUsedAt      DateTime?
   revokedAt       DateTime?
   createdAt       DateTime  @default(now())
+}
+
+// The other language's version of an item's translatable text fields. The item's own
+// columns hold the text in its sourceLang; this row holds the translation (see lib/translations.ts).
+model Translation {
+  id         String   @id @default(cuid())
+  entity     String // "profile" | "experience" | "education" | "projects" | "skills"
+  entityId   String // "1" for the profile singleton
+  lang       String // target language of this translation
+  fields     Json // { fieldName: string | string[] }
+  manual     Boolean  @default(false) // hand-written; automatic translation never overwrites it
+  sourceHash String? // hash of the source text when translated; a mismatch = out of date
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entity, entityId, lang])
 }

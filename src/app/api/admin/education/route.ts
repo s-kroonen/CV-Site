@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { saveAdminTranslation } from "@/lib/admin-translation";
 import { educationSchema, formatZodError } from "@/lib/admin-schemas";
 
 export async function POST(request: Request) {
@@ -17,5 +18,6 @@ export async function POST(request: Request) {
     },
   });
 
-  return Response.json(created, { status: 201 });
+  const translation = await saveAdminTranslation("education", created.id, created, json);
+  return Response.json({ ...created, translation }, { status: 201 });
 }

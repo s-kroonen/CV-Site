@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { saveAdminTranslation } from "@/lib/admin-translation";
 import { profileSchema, formatZodError } from "@/lib/admin-schemas";
 
 export async function PUT(request: Request) {
@@ -14,5 +15,6 @@ export async function PUT(request: Request) {
     update: parsed.data,
   });
 
-  return Response.json(updated);
+  const translation = await saveAdminTranslation("profile", "1", updated, json);
+  return Response.json({ ...updated, translation });
 }

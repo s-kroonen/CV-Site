@@ -1,6 +1,8 @@
 import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 import { asStringArray, asSocialLinks } from "@/lib/json";
 import { formatDateRange } from "@/lib/format";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import type { Locale } from "@/lib/i18n/config";
 import type {
   ProfileModel as Profile,
   ExperienceModel as Experience,
@@ -35,13 +37,16 @@ export function CvDocument({
   experience,
   education,
   skills,
+  lang,
 }: {
+  lang: Locale;
   profile: Profile;
   experience: Experience[];
   education: Education[];
   skills: Skill[];
 }) {
   const links = asSocialLinks(profile.socialLinks);
+  const t = getDictionary(lang);
 
   return (
     <Document title={`${profile.name} - CV`}>
@@ -60,12 +65,12 @@ export function CvDocument({
 
         {experience.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Experience</Text>
+            <Text style={styles.sectionTitle}>{t.sections.experience}</Text>
             {experience.map((item) => (
               <View key={item.id} style={styles.entry} wrap={false}>
                 <View style={styles.entryTitleRow}>
                   <Text style={styles.entryTitle}>{[item.title, item.company].filter(Boolean).join(" · ")}</Text>
-                  <Text style={styles.entryMeta}>{formatDateRange(item.startDate, item.endDate)}</Text>
+                  <Text style={styles.entryMeta}>{formatDateRange(item.startDate, item.endDate, lang, t.common)}</Text>
                 </View>
                 {item.description ? <Text>{item.description}</Text> : null}
                 {asStringArray(item.bullets).map((bullet, i) => (
@@ -80,12 +85,12 @@ export function CvDocument({
 
         {education.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Education</Text>
+            <Text style={styles.sectionTitle}>{t.sections.education}</Text>
             {education.map((item) => (
               <View key={item.id} style={styles.entry} wrap={false}>
                 <View style={styles.entryTitleRow}>
                   <Text style={styles.entryTitle}>{item.degree || item.institution}</Text>
-                  <Text style={styles.entryMeta}>{formatDateRange(item.startDate, item.endDate)}</Text>
+                  <Text style={styles.entryMeta}>{formatDateRange(item.startDate, item.endDate, lang, t.common)}</Text>
                 </View>
                 {(item.degree ? item.institution : "") || item.field ? (
                   <Text>{[item.degree ? item.institution : "", item.field].filter(Boolean).join(" · ")}</Text>
@@ -97,7 +102,7 @@ export function CvDocument({
 
         {skills.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Skills</Text>
+            <Text style={styles.sectionTitle}>{t.sections.skills}</Text>
             <View style={styles.skillsRow}>
               {skills.map((skill) => (
                 <Text key={skill.id} style={styles.skillChip}>

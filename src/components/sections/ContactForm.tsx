@@ -2,10 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import { Turnstile } from "@/components/Turnstile";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
 export function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string }) {
+  const { t } = useLocale();
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -33,26 +35,26 @@ export function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string })
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Something went wrong. Please try again.");
+        throw new Error(body?.error ?? t.contact.error);
       }
 
       setStatus("success");
       form.reset();
     } catch (err) {
       setStatus("error");
-      setErrorMessage(err instanceof Error ? err.message : "Something went wrong.");
+      setErrorMessage(err instanceof Error ? err.message : t.contact.error);
     }
   }
 
   if (status === "success") {
-    return <p className="max-w-md text-ink-muted">Thanks — your message has been sent. I&apos;ll reply by email.</p>;
+    return <p className="max-w-md text-ink-muted">{t.contact.thanks}</p>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex max-w-md flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="name" className="text-sm text-ink-muted">
-          Name
+          {t.contact.name}
         </label>
         <input
           id="name"
@@ -64,7 +66,7 @@ export function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string })
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm text-ink-muted">
-          Email
+          {t.contact.email}
         </label>
         <input
           id="email"
@@ -77,7 +79,7 @@ export function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string })
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="message" className="text-sm text-ink-muted">
-          Message
+          {t.contact.message}
         </label>
         <textarea
           id="message"
@@ -103,7 +105,7 @@ export function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string })
         disabled={status === "submitting"}
         className="w-fit rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {status === "submitting" ? "Sending…" : "Send message"}
+        {status === "submitting" ? t.contact.sending : t.contact.send}
       </button>
     </form>
   );

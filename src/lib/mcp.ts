@@ -12,11 +12,14 @@ import {
   getPrivateContact,
   getProfileRow,
   listItems,
+  setItemTranslation,
   setLifecycle,
   updateItem,
   updatePrivateContact,
   updateProfile,
 } from "@/lib/content-service";
+import { TRANSLATABLE, isTEntity } from "@/lib/translations";
+import { isLocale } from "@/lib/i18n/config";
 import { MAX_UPLOAD_BYTES, processImage, sniffImageType, uploadDir } from "@/lib/uploads";
 import type { AuthedToken, Scope } from "@/lib/api-tokens";
 
@@ -31,6 +34,7 @@ const SERVER_INFO = { name: "cv-site", version: "1.0.0" };
 const INSTRUCTIONS = `Manage the content of Storm Kroonen's CV site. Entities: experience, education, projects, skills (plus the profile).
 Call describe_entity first to see the fields of an entity. Dates are YYYY-MM-DD. Most fields are optional; one identifying field is required (title/company, institution/degree, project title, skill name).
 Tags (experience.tags, projects.techStack) and skill categories should reuse existing spellings: call list_tags before adding new ones.
+The site is bilingual (English/Dutch). Write an item in either language and set "sourceLang" ("en" or "nl", default "en") to say which. The other language comes from a translation: pass "translation" (the translatable fields, in the other language) when creating/updating, or call set_translation. Without one, the translation API (if configured on the server) fills it in, else the site shows the source text in both languages. Translatable fields: see describe_entity.
 "Delete" moves an item to the trash (restorable); archiving hides an item from the public site without deleting it. Permanent deletion is only possible in the admin UI.`;
 
 type Ctx = { token: AuthedToken };
@@ -53,13 +57,13 @@ const obj = (properties: Record<string, unknown>, required: string[] = []) => ({
 
 const FIELD_DOCS: Record<Entity, string> = {
   experience:
-    "title (string), company (string) - at least one required; location; startDate and endDate (YYYY-MM-DD, endDate null/empty = current role); description; bullets (string[]); tags (string[]); logoPath (from upload_image); sortIndex (number, lower first).",
+    "sourceLang (en|nl); title (string), company (string) - at least one required; location; startDate and endDate (YYYY-MM-DD, endDate null/empty = current role); description; bullets (string[]); tags (string[]); logoPath (from upload_image); sortIndex (number, lower first).",
   education:
-    "institution (string), degree (string) - at least one required; field (field of study); startDate, endDate (YYYY-MM-DD); description; logoPath; sortIndex.",
+    "sourceLang (en|nl); institution (string), degree (string) - at least one required; field (field of study); startDate, endDate (YYYY-MM-DD); description; logoPath; sortIndex.",
   projects:
-    "title (required); slug (optional, generated from title); summary (one line); description; techStack (string[]); repoUrl; liveUrl; images (array of {src, alt, thumb?, width?, height?} - use upload_image results); featured (boolean); sortIndex.",
+    "sourceLang (en|nl); title (required); slug (optional, generated from title); summary (one line); description; techStack (string[]); repoUrl; liveUrl; images (array of {src, alt, thumb?, width?, height?} - use upload_image results); featured (boolean); sortIndex.",
   skills:
-    "name (required); category (string, e.g. 'Languages'); proficiency (0-100 or null for no level bar); sortIndex.",
+    "sourceLang (en|nl); name (required); category (string, e.g. 'Languages'); proficiency (0-100 or null for no level bar); sortIndex.",
 };
 
 const entityArg = z.object({ entity: z.enum(ENTITIES) });
@@ -73,7 +77,8 @@ const tools: Tool[] = [
     inputSchema: obj({ entity: entityEnum }, ["entity"]),
     run: async (args) => {
       const { entity } = entityArg.parse(args);
-      return { result: { entity, fields: FIELD_DOCS[entity] }, entity };
+      const translatable = TRANSLATABLE[entity].map((f) => f.name).join(", ");
+      return { result: { entity, fields: FIELD_DOCS[entity], translatableFields: translatable }, entity };
     },
   },
   {
@@ -137,6 +142,29 @@ const tools: Tool[] = [
         .extend({ id: z.string(), action: z.enum(["archive", "unarchive", "trash", "restore"]) })
         .parse(args);
       return { result: await setLifecycle(entity, id, action), entity, entityId: id };
+    },
+  },
+  {
+    name: "set_translation",
+    description:
+      "Write the other-language version of an item (or the profile, entity 'profile', no id) by hand. `data` holds the translatable fields in the TARGET language (see describe_entity for which fields). `lang` defaults to the language the item is not written in. Hand-written translations are never overwritten by automatic translation.",
+    scope: ["write"],
+    inputSchema: obj(
+      {
+        entity: { type: "string", enum: ["profile", ...ENTITIES] },
+        id: { type: "string", description: "Item id (omit for the profile)." },
+        lang: { type: "string", enum: ["en", "nl"] },
+        data: { type: "object", description: "Translated field values." },
+      },
+      ["entity", "data"],
+    ),
+    run: async (args) => {
+      const a = z.object({ entity: z.string(), id: z.string().optional(), lang: z.string().optional(), data: dataObj }).parse(args);
+      if (!isTEntity(a.entity)) throw new ContentError("Unknown entity.");
+      if (a.entity !== "profile" && !a.id) throw new ContentError("id is required for this entity.");
+      if (a.lang !== undefined && !isLocale(a.lang)) throw new ContentError('lang must be "en" or "nl".');
+      const result = await setItemTranslation(a.entity, a.id ?? "1", a.data, a.lang as "en" | "nl" | undefined);
+      return { result, entity: a.entity, entityId: a.id ?? "1" };
     },
   },
   {

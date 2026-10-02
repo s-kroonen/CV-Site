@@ -81,7 +81,8 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
   - [x] `robots.txt` rules for AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, etc.) - decide allow/deny per bot.
   - [x] Public read-only JSON of the CV (`/api/cv.json`) alongside the existing PDF.
   - [ ] Optional public read-only MCP endpoint / `/.well-known` discovery entry (separate from the write-capable admin MCP).
-- [ ] Verify after deploy: Search Console (steps in `docs/SEO.md`), Rich Results Test, Lighthouse in CI.
+- [x] `npm run seo:check` crawls a running site and verifies robots, sitemap, hreflang, metadata, JSON-LD, AI files and private areas (see `docs/SEO.md`).
+- [ ] After deploy: run it against production, set up Search Console, Rich Results Test, Lighthouse in CI.
 
 ## 7. Infrastructure / carry-overs
 
@@ -89,6 +90,25 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 - [ ] Pin `github/codeql-action` and `appleboy/ssh-action` to commit SHAs (global rule).
 - [ ] Confirm `SMTP_PORT` default (587) is what the mail provider needs.
 - [ ] Decide on committing the `package-lock.json` `hasInstallScript` change.
+
+## 8. Linked content and detail pages
+
+- [ ] **Relations** between items (many-to-many, editable in admin and via MCP):
+  - [ ] Experience <-> Project (a role can have several projects; a project can belong to several roles).
+  - [ ] Experience <-> Education (e.g. an internship belongs to a study programme).
+  - [ ] Education never links to projects directly: a project that belongs to a study must hang off an experience; the education page shows those projects *through* its linked experiences.
+- [ ] **Detail pages** (own URL per language, in the sitemap, with JSON-LD):
+  - [ ] Experience detail: full description, bullet points, tags, linked projects and linked education.
+  - [ ] Project detail: also shows the experiences it belongs to (reverse link).
+  - [ ] Education detail: linked experiences (and their projects).
+- [ ] **Compact lists**: the Overview and the Experience tab show basic info only (title, company, dates, short description, no bullet points) as cards that link to the detail page.
+- [ ] Admin pickers for linking (search + add/remove), import/export and MCP tools carry the links.
+
+## 9. Languages (English / Dutch)
+
+- [x] Language prefix in URLs (`/en`, `/nl`), default from the browser's Accept-Language, remembered choice, language switcher, hreflang.
+- [x] Interface text in both languages; content translated per item (hand-written or via a translation API: DeepL or self-hosted LibreTranslate - no LLM), source language per item, "out of date" flag.
+- [x] Admin translation panel, MCP `set_translation`, translations included in export/import, localized PDF, sitemap and llms files per language.
 
 ## Suggested order
 

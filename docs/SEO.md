@@ -6,12 +6,13 @@ something in the admin panel (or through the MCP connector).
 
 | URL | What |
 | --- | --- |
+| `/en/...`, `/nl/...` | Every page exists per language (see `docs/TRANSLATION.md`); `/` redirects by browser language. Each language version carries `hreflang` links to the others, an `x-default` (English) and its own canonical URL. |
 | `/robots.txt` | Allows everything public, blocks `/admin`, `/api/`, `/oauth/`. AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, ...) are listed explicitly as allowed. |
 | `/sitemap.xml` | All public pages and project pages, with last-modified dates. Hidden sections (nothing to show) are left out. |
 | `/llms.txt` | Short index for LLMs (llmstxt.org convention). |
-| `/llms-full.txt` | The whole CV as one Markdown document. |
-| `/api/cv.json` | The same content as structured JSON (active items only, never the private email/phone). |
-| `/opengraph-image` | Generated social preview card (name, tagline, location). Project pages use their cover image instead. |
+| `/llms-full.txt?lang=nl` | The whole CV as one Markdown document (`lang=en` default). |
+| `/api/cv.json?lang=nl` | The same content as structured JSON (active items only, never the private email/phone). |
+| `/en/og-image`, `/nl/og-image` | Generated social preview card (name, tagline, location). Project pages use their cover image instead. |
 
 Every page also carries a canonical link, Open Graph and Twitter tags, and
 `<link rel="alternate">` pointers to the Markdown and JSON versions. The home
@@ -29,6 +30,16 @@ also send `X-Robots-Tag: noindex`.
    (the `msvalidate.01` value), or import the site from Search Console.
 3. Check a page with Google's *Rich Results Test* and a link preview tool
    (e.g. paste the URL into a chat app) to see the card.
+
+## Checking it
+
+`npm run seo:check -- https://storm.amber.kroon-en.nl` (or `http://localhost:3000`)
+crawls the running site and verifies about 200 things: robots and sitemap,
+language redirects for different `Accept-Language` headers, and for every page
+the title and description length, one `h1`, canonical and reciprocal `hreflang`
+links, Open Graph tags, image alt text, valid JSON-LD, reachable social images,
+the AI files, and that `/admin`, `/api` and `/oauth` stay private. It exits
+with an error if anything fails. Run it after each deploy.
 
 ## Opting an AI crawler out
 

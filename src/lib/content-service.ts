@@ -11,6 +11,8 @@ import {
 } from "@/lib/admin-schemas";
 import { applyLifecycle, viewWhere, type Entity, type LifecycleAction, type LifecycleView } from "@/lib/lifecycle";
 import { slugify, uniqueProjectSlug } from "@/lib/slug";
+import { getTranslations, parseProvided, saveTranslation, setManualTranslation, TranslationFailed, type TEntity } from "@/lib/translations";
+import type { Locale } from "@/lib/i18n/config";
 
 // Content operations shared by the MCP server (and the export code). Every
 // write goes through the same zod schemas the admin forms use, so an AI client
@@ -27,6 +29,7 @@ const life = (r: { archivedAt: Date | null; deletedAt: Date | null }) => ({
 export function serializeExperience(r: any, withId = false): Row {
   return {
     ...(withId ? { id: r.id } : {}),
+    sourceLang: r.sourceLang ?? "en",
     company: r.company,
     title: r.title,
     location: r.location,
@@ -43,6 +46,7 @@ export function serializeExperience(r: any, withId = false): Row {
 export function serializeEducation(r: any, withId = false): Row {
   return {
     ...(withId ? { id: r.id } : {}),
+    sourceLang: r.sourceLang ?? "en",
     institution: r.institution,
     degree: r.degree,
     field: r.field,
@@ -57,6 +61,7 @@ export function serializeEducation(r: any, withId = false): Row {
 export function serializeProject(r: any, withId = false): Row {
   return {
     ...(withId ? { id: r.id } : {}),
+    sourceLang: r.sourceLang ?? "en",
     title: r.title,
     slug: r.slug,
     summary: r.summary,
@@ -73,6 +78,7 @@ export function serializeProject(r: any, withId = false): Row {
 export function serializeSkill(r: any, withId = false): Row {
   return {
     ...(withId ? { id: r.id } : {}),
+    sourceLang: r.sourceLang ?? "en",
     name: r.name,
     category: r.category,
     proficiency: r.proficiency,
@@ -82,6 +88,7 @@ export function serializeSkill(r: any, withId = false): Row {
 }
 export function serializeProfile(p: any): Row {
   return {
+    sourceLang: p.sourceLang ?? "en",
     name: p.name,
     tagline: p.tagline,
     bio: p.bio,
@@ -128,7 +135,17 @@ export async function getItem(entity: Entity, id: string): Promise<Row> {
     where: { id },
   });
   if (!row) throw new ContentError(`No ${entity} item with id "${id}".`);
-  return SERIALIZERS[entity](row as never, true);
+  return { ...SERIALIZERS[entity](row as never, true), translations: await getTranslations(entity, id, row as Row) };
+}
+
+/** Splits a `translation` entry off the incoming data (it is stored separately, not on the item). */
+function splitTranslation(data: Row): { data: Row; translation: unknown } {
+  const { translation, ...rest } = data;
+  return { data: rest, translation };
+}
+
+async function afterSave(entity: TEntity, id: string, row: unknown, translation: unknown) {
+  return saveTranslation({ entity, id, row: row as Row, provided: parseProvided(entity, translation) });
 }
 
 const toDate = (v: string | null | undefined) => (v ? new Date(v) : null);
@@ -172,19 +189,23 @@ async function guardSlug<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-export async function createItem(entity: Entity, data: Row): Promise<Row> {
+export async function createItem(entity: Entity, input: Row): Promise<Row> {
+  const { data, translation } = splitTranslation(input);
   const fields = await prepare(entity, data);
   const row = await guardSlug(() =>
     (delegate(entity) as unknown as { create(a: object): Promise<unknown> }).create({ data: fields }),
   );
-  return SERIALIZERS[entity](row as never, true);
+  const id = (row as { id: string }).id;
+  const status = await afterSave(entity, id, row, translation);
+  return { ...(await getItem(entity, id)), translationStatus: status };
 }
 
 /** Partial update: the patch is merged over the current item, then validated as a whole. */
-export async function updateItem(entity: Entity, id: string, patch: Row): Promise<Row> {
+export async function updateItem(entity: Entity, id: string, input: Row): Promise<Row> {
+  const { data: patch, translation } = splitTranslation(input);
   const current = await getItem(entity, id);
   // id and lifecycle fields aren't editable here (lifecycle changes go through setLifecycle).
-  const drop = ["id", "archivedAt", "deletedAt"];
+  const drop = ["id", "archivedAt", "deletedAt", "translations", "translationStatus"];
   const strip = (r: Row) => Object.fromEntries(Object.entries(r).filter(([k]) => !drop.includes(k)));
   const editable = strip(current);
   const patchFields = strip(patch);
@@ -192,7 +213,25 @@ export async function updateItem(entity: Entity, id: string, patch: Row): Promis
   const row = await guardSlug(() =>
     (delegate(entity) as unknown as { update(a: object): Promise<unknown> }).update({ where: { id }, data: fields }),
   );
-  return SERIALIZERS[entity](row as never, true);
+  const status = await afterSave(entity, id, row, translation);
+  return { ...(await getItem(entity, id)), translationStatus: status };
+}
+
+/** Stores a hand-written translation for an item (MCP `set_translation`). */
+export async function setItemTranslation(entity: TEntity, id: string, data: Row, lang?: Locale): Promise<Row> {
+  const row = entity === "profile" ? await prisma.profile.findUnique({ where: { id: 1 } }) : await rawRow(entity, id);
+  if (!row) throw new ContentError(entity === "profile" ? "There is no profile yet." : `No ${entity} item with id "${id}".`);
+  try {
+    await setManualTranslation(entity, entity === "profile" ? "1" : id, row as Row, data, lang);
+  } catch (err) {
+    if (err instanceof TranslationFailed) throw new ContentError(err.message);
+    throw err;
+  }
+  return entity === "profile" ? ((await getProfileRow()) as Row) : getItem(entity as Entity, id);
+}
+
+async function rawRow(entity: Entity, id: string): Promise<unknown> {
+  return (delegate(entity) as unknown as { findUnique(a: object): Promise<unknown> }).findUnique({ where: { id } });
 }
 
 export async function setLifecycle(entity: Entity, id: string, action: Exclude<LifecycleAction, "purge">): Promise<Row> {
@@ -203,15 +242,18 @@ export async function setLifecycle(entity: Entity, id: string, action: Exclude<L
 
 export async function getProfileRow(): Promise<Row | null> {
   const p = await prisma.profile.findUnique({ where: { id: 1 } });
-  return p ? serializeProfile(p) : null;
+  return p ? { ...serializeProfile(p), translations: await getTranslations("profile", "1", p) } : null;
 }
 
-export async function updateProfile(patch: Row): Promise<Row> {
-  const current = await getProfileRow();
-  const r = profileSchema.safeParse({ ...(current ?? {}), ...patch });
+export async function updateProfile(input: Row): Promise<Row> {
+  const { data: patch, translation } = splitTranslation(input);
+  const { translations: _t, ...current } = ((await getProfileRow()) ?? {}) as Row;
+  void _t;
+  const r = profileSchema.safeParse({ ...current, ...patch });
   if (!r.success) throw new ContentError(formatZodError(r.error));
   const row = await prisma.profile.upsert({ where: { id: 1 }, create: { id: 1, ...r.data }, update: r.data });
-  return serializeProfile(row);
+  const status = await afterSave("profile", "1", row, translation);
+  return { ...((await getProfileRow()) as Row), translationStatus: status };
 }
 
 export async function getPrivateContact(): Promise<Row | null> {

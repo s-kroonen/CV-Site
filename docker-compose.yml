@@ -50,6 +50,10 @@ services:
       # Optional: Search Console / Bing Webmaster verification codes.
       GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
       BING_SITE_VERIFICATION: ${BING_SITE_VERIFICATION:-}
+      # Optional machine translation for the Dutch/English content (set one; see docs/TRANSLATION.md).
+      DEEPL_API_KEY: ${DEEPL_API_KEY:-}
+      LIBRETRANSLATE_URL: ${LIBRETRANSLATE_URL:-}
+      LIBRETRANSLATE_API_KEY: ${LIBRETRANSLATE_API_KEY:-}
     volumes:
       - db_data:/data/db
       - upload_data:/data/uploads
