@@ -17,7 +17,9 @@
     "bootstrap-admin": "tsx scripts/bootstrap-admin.ts"
   },
   "overrides": {
-    "better-sqlite3": "12.6.0"
+    "better-sqlite3": "12.6.0",
+    "mysql2": "^3.24.5",
+    "deepmerge-ts": "^8.0.2"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",
@@ -27,8 +29,8 @@
     "@simplewebauthn/server": "^13.3.2",
     "@uiw/react-md-editor": "^4.1.1",
     "framer-motion": "^12.42.2",
-    "next": "16.2.10",
-    "nodemailer": "^9.0.3",
+    "next": "^16.3.8",
+    "nodemailer": "^10.0.13",
     "prisma": "^7.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -41,7 +43,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "^16.3.8",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
     "typescript": "^5",
