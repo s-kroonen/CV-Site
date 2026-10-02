@@ -23,6 +23,11 @@ export async function POST(request: Request) {
     const target = new URL(redirectUri);
     for (const [k, v] of Object.entries(set)) target.searchParams.set(k, v);
     if (state) target.searchParams.set("state", state);
+    // The consent page submits with fetch (a form POST to another origin is blocked by our
+    // CSP form-action) and navigates itself; plain form posts still get a 303.
+    if ((request.headers.get("accept") ?? "").includes("application/json")) {
+      return Response.json({ redirect: target.toString() }, { headers: { "Cache-Control": "no-store" } });
+    }
     return Response.redirect(target.toString(), 303);
   };
 

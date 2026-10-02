@@ -2,17 +2,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_SESSION_COOKIE, isValidAdminSession } from "@/lib/admin-session";
 import { parseAuthRequest } from "@/lib/oauth";
+import { ConsentForm } from "./ConsentForm";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Authorize access", robots: { index: false } };
 
 type Params = Record<string, string | undefined>;
-
-const SCOPE_COPY: Record<string, string> = {
-  read: "Read your CV content",
-  write: "Add, edit, archive and trash content, upload images",
-  private: "Read and change your private email and phone",
-};
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
@@ -67,44 +62,13 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
         <strong className="text-ink">{request.clientName}</strong> wants to access your CV site on your behalf. It will
         return to <code>{host}</code> after you decide.
       </p>
-      <form method="post" action="/oauth/authorize/decision" className="flex flex-col gap-5">
-        {Object.entries(hidden).map(([k, v]) => (
-          <input key={k} type="hidden" name={k} value={v} />
-        ))}
-        <fieldset className="flex flex-col gap-2 text-sm">
-          <legend className="mb-1 text-ink-muted">Allow it to:</legend>
-          {(["read", "write", "private"] as const).map((scope) => (
-            <label key={scope} className="flex items-start gap-2">
-              <input
-                type="checkbox"
-                name="scope"
-                value={scope}
-                defaultChecked={scope === "read" || (scope === "write" && (request.requested.length === 0 || request.requested.includes("write"))) || (scope === "private" && request.requested.includes("private"))}
-                disabled={scope === "read"}
-                className="mt-1 accent-[var(--accent)]"
-              />
-              <span>{SCOPE_COPY[scope]}</span>
-            </label>
-          ))}
-          <input type="hidden" name="scope" value="read" />
-        </fieldset>
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            name="decision"
-            value="approve"
-            className="rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
-          >
-            Approve
-          </button>
-          <button type="submit" name="decision" value="deny" className="rounded-md border border-line px-5 py-2 text-sm hover:border-accent">
-            Deny
-          </button>
-        </div>
-        <p className="text-xs text-ink-muted">
-          You can disconnect it any time under Admin → AI access. Only approve apps you started connecting yourself.
-        </p>
-      </form>
+      <ConsentForm
+        hidden={hidden}
+        defaults={{
+          write: request.requested.length === 0 || request.requested.includes("write"),
+          private: request.requested.includes("private"),
+        }}
+      />
     </Card>
   );
 }
