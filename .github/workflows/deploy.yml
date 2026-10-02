@@ -67,10 +67,21 @@ jobs:
           TOKEN=${{ matrix.host == 'primary' && secrets.PRIMARY_PORTAINER_TOKEN || secrets.SECONDARY_PORTAINER_TOKEN }}
           SID=${{ matrix.host == 'primary' && secrets.PRIMARY_STACK_ID || secrets.SECONDARY_STACK_ID }}
           EID=${{ matrix.host == 'primary' && secrets.PRIMARY_ENDPOINT_ID || secrets.SECONDARY_ENDPOINT_ID }}
+          # The git-redeploy call REPLACES the stack's environment variables with
+          # whatever "Env" is in the body; omitting it wipes them to empty (this
+          # is what blanked SESSION_SECRET etc.). So read the stack's current
+          # env from Portainer and send it back unchanged. Values are never
+          # printed, and an empty env aborts instead of deploying a broken stack.
+          ENV_JSON=$(curl -fsSL "$BASE/api/stacks/$SID" -H "X-API-Key: $TOKEN" | jq -c '.Env // []')
+          if [ "$ENV_JSON" = "[]" ]; then
+            echo "::error::Stack $SID has no environment variables set in Portainer; refusing to redeploy."
+            exit 1
+          fi
+          BODY=$(jq -nc --argjson env "$ENV_JSON" '{Env: $env, PullImage: true, Prune: false}')
           curl -fsSL -X PUT \
             "$BASE/api/stacks/$SID/git/redeploy?endpointId=$EID" \
             -H "X-API-Key: $TOKEN" -H "Content-Type: application/json" \
-            -d '{"PullImage": true, "Prune": false}'
+            -d "$BODY" > /dev/null
 
   sync-db:
     needs: deploy
