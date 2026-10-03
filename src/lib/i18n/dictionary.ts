@@ -26,6 +26,8 @@ const en = {
   common: {
     viewAll: "View all →",
     all: "All",
+    showTags: "Show tags",
+    hideTags: "Hide tags",
     present: "Present",
     until: "Until",
     downloadCv: "Download CV (PDF)",
@@ -131,6 +133,8 @@ const nl: Dictionary = {
   common: {
     viewAll: "Bekijk alles →",
     all: "Alles",
+    showTags: "Toon tags",
+    hideTags: "Verberg tags",
     present: "heden",
     until: "Tot",
     downloadCv: "Download CV (PDF)",

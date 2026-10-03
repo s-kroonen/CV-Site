@@ -31,6 +31,7 @@ export function ProjectsSection({
   const reduceMotion = useReducedMotion();
   const { lang, t, href } = useLocale();
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [showTags, setShowTags] = useState(false);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -62,7 +63,7 @@ export function ProjectsSection({
   if (items.length === 0) return null;
 
   const renderCard = (project: Project) => {
-    const tech = asStringArray(project.techStack);
+    const tech = showTags ? asStringArray(project.techStack) : [];
     const cover = asImages(project.images)[0];
     const period = formatProjectPeriod(project.startDate, project.endDate, project.status, lang, t.common.present);
     return (
@@ -114,7 +115,19 @@ export function ProjectsSection({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <SectionHeading title={t.sections.projects} asPage={asPage} moreHref={hasMore ? moreHref : undefined} moreLabel={t.common.viewAll} />
           {!limit && allTags.length > 1 && (
-            <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                setShowTags((v) => !v);
+                setActiveTag(null);
+              }}
+              aria-expanded={showTags}
+              className="rounded-full border border-line px-3 py-1 font-mono text-xs text-ink-muted transition-colors hover:text-ink"
+            >
+              {showTags ? t.common.hideTags : t.common.showTags}
+            </button>
+          )}
+          {!limit && showTags && allTags.length > 1 && (
+            <div className="flex w-full flex-wrap gap-2">
               <button
                 onClick={() => setActiveTag(null)}
                 className={`rounded-full border px-3 py-1 font-mono text-xs transition-colors ${

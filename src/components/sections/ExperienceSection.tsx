@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { asStringArray } from "@/lib/json";
 import { formatDateRange } from "@/lib/format";
 import { useLocale } from "@/components/i18n/LocaleProvider";
 import type { ExperienceModel as Experience } from "@/generated/prisma/models";
@@ -44,7 +43,6 @@ export function ExperienceSection({
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
           />
           {items.map((item, index) => {
-            const tags = asStringArray(item.tags).slice(0, 5);
             const projects = ((item as { projects?: { title: string; slug: string }[] }).projects ?? []).slice(0, 3);
             const dateRange = formatDateRange(item.startDate, item.endDate, lang, t.common);
             const target = item.slug ? href(`/experience/${item.slug}`) : href("/experience");
@@ -76,15 +74,6 @@ export function ExperienceSection({
                   </h3>
                   {item.location && <p className="text-sm text-ink-muted">{item.location}</p>}
                   {item.description && <p className="mt-2 line-clamp-3 max-w-2xl text-ink-muted">{item.description}</p>}
-                  {tags.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {tags.map((tag) => (
-                        <span key={tag} className="rounded-full border border-line px-2.5 py-0.5 font-mono text-xs text-ink-muted">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                   {projects.length > 0 && (
                     <p className="mt-3 text-sm text-ink-muted">
                       <span className="font-medium text-ink">{t.detail.projects}:</span>{" "}
