@@ -93,6 +93,7 @@ export function ProjectForm({ item, translation, links }: { links?: { experience
           <select name="status" defaultValue={item?.status ?? ""} className="rounded-md border border-line bg-paper px-3 py-2 text-ink">
             <option value="">Not specified</option>
             <option value="ongoing">Ongoing</option>
+            <option value="on_hold">On hold (still planned)</option>
             <option value="completed">Completed</option>
             <option value="experiment">Experiment (never really used)</option>
             <option value="discontinued">Discontinued</option>

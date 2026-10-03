@@ -88,12 +88,12 @@ describe("project category, status and period", () => {
     const p = (await createItem("projects", {
       title: "Grouped",
       category: "Homelab",
-      status: "discontinued",
+      status: "on_hold",
       startDate: "2025-04-01",
       endDate: "2025-06-12",
       translation: { category: "Thuislab" },
     })) as Item & { category: string; status: string; startDate: string; translations: Record<string, Record<string, unknown>> };
-    expect(p).toMatchObject({ category: "Homelab", status: "discontinued", startDate: "2025-04-01T00:00:00.000Z" });
+    expect(p).toMatchObject({ category: "Homelab", status: "on_hold", startDate: "2025-04-01T00:00:00.000Z" });
     expect(p.translations.nl.category).toBe("Thuislab");
     const nl = await getProjectBySlug(p.slug, "nl");
     expect(nl?.category).toBe("Thuislab");

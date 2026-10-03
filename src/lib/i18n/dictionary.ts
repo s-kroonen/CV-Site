@@ -99,6 +99,7 @@ const en = {
   },
   status: {
     ongoing: "Ongoing",
+    on_hold: "On hold",
     completed: "Completed",
     discontinued: "Discontinued",
     experiment: "Experiment",
@@ -203,6 +204,7 @@ const nl: Dictionary = {
   },
   status: {
     ongoing: "Lopend",
+    on_hold: "On hold",
     completed: "Afgerond",
     discontinued: "Stopgezet",
     experiment: "Experiment",

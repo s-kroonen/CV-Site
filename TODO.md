@@ -114,7 +114,7 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 ## 10. GitHub projects and education import
 
 - [x] Inventory of all public repos (`docs/github-inventory.md`) with groups and proposed links.
-- [x] Project **category** (grouping on the Projects tab), **status** (ongoing / completed / experiment / discontinued) and period (start/end) - database, admin, public site, translation, import/export, MCP.
+- [x] Project **category** (grouping on the Projects tab), **status** (ongoing / on hold / completed / experiment / discontinued) and period (start/end) - database, admin, public site, translation, import/export, MCP.
 - [ ] After deploy: import the ~28 own repos as projects (basic info), the "study projects" experience linked to education, education items (HBO ICT, HBO TI, HAVO), Jumbo experience, CV profile text as Dutch bio and skills; add the freelance NRG2Fly note.
 
 ## Suggested order
