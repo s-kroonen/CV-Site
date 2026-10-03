@@ -61,7 +61,7 @@ const FIELD_DOCS: Record<Entity, string> = {
   education:
     "sourceLang (en|nl); experienceIds (string[], link to experience - education has no projects of its own, they come via linked experience); institution (string), degree (string) - at least one required; field (field of study); startDate, endDate (YYYY-MM-DD); description; logoPath; sortIndex.",
   projects:
-    "sourceLang (en|nl); experienceIds (string[], the roles this project belongs to); title (required); slug (optional, generated from title); summary (one line); description; techStack (string[]); repoUrl; liveUrl; images (array of {src, alt, thumb?, width?, height?} - use upload_image results); featured (boolean); sortIndex.",
+    "sourceLang (en|nl); experienceIds (string[], the roles this project belongs to); category (group shown on the Projects tab, e.g. 'Homelab' - reuse names from list_tags pool 'projectCategories'); status ('' | ongoing | completed | discontinued | experiment); startDate, endDate (YYYY-MM-DD); title (required); slug (optional, generated from title); summary (one line); description; techStack (string[]); repoUrl; liveUrl; images (array of {src, alt, thumb?, width?, height?} - use upload_image results); featured (boolean); sortIndex.",
   skills:
     "sourceLang (en|nl); name (required); category (string, e.g. 'Languages'); proficiency (0-100 or null for no level bar); sortIndex.",
 };

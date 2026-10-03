@@ -268,11 +268,19 @@ export function prepareImport(rawDoc: unknown, uploads: Map<string, Uint8Array>)
     const slug = r.data.slug || slugify(r.data.title);
     if (slugsInFile.has(slug)) return errors.push(`projects #${i + 1}: duplicate slug "${slug}" in the file.`);
     slugsInFile.add(slug);
-    const { repoUrl, liveUrl, experienceIds: _x, ...rest } = r.data;
+    const { repoUrl, liveUrl, experienceIds: _x, startDate, endDate, ...rest } = r.data;
     void _x;
     out.projects.push({
       key: slug,
-      data: { ...rest, slug, repoUrl: repoUrl || null, liveUrl: liveUrl || null, ...lifeOf(raw) },
+      data: {
+        ...rest,
+        slug,
+        repoUrl: repoUrl || null,
+        liveUrl: liveUrl || null,
+        startDate: toDate(startDate),
+        endDate: toDate(endDate),
+        ...lifeOf(raw),
+      },
       translations: translationsOf("projects", raw),
     });
   });

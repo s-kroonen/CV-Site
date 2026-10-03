@@ -10,12 +10,18 @@ import { TranslationPanel, readFormFields, useTranslation, type TranslationInit 
 import type { Locale } from "@/lib/i18n/config";
 import { Field, FormError, SubmitButton, TagInput, TextArea, readApiError } from "@/components/admin/fields";
 
+function toDateInput(d: Date | string | null | undefined): string {
+  if (!d) return "";
+  return new Date(d).toISOString().slice(0, 10);
+}
+
 export function ProjectForm({ item, translation, links }: { links?: { experienceIds: string[] }; item?: ProjectModel; translation?: TranslationInit }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [experienceIds, setExperienceIds] = useState<string[]>(links?.experienceIds ?? []);
   const tr = useTranslation("projects", (item?.sourceLang as Locale) ?? "en", translation ?? null);
   const [images, setImages] = useState<ImageValue[]>(item ? asImages(item.images) : []);
+  const [category, setCategory] = useState<string[]>(item?.category ? [item.category] : []);
   const [techStack, setTechStack] = useState<string[]>(item ? asStringArray(item.techStack) : []);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -32,6 +38,10 @@ export function ProjectForm({ item, translation, links }: { links?: { experience
       title: data.get("title"),
       slug: data.get("slug") || "",
       summary: data.get("summary"),
+      category: category[0] ?? "",
+      status: data.get("status") || "",
+      startDate: data.get("startDate") || null,
+      endDate: data.get("endDate") || null,
       description: data.get("description"),
       techStack,
       repoUrl: data.get("repoUrl") || "",
@@ -66,6 +76,31 @@ export function ProjectForm({ item, translation, links }: { links?: { experience
         defaultValue={item?.slug}
         hint="Used in the project's web address. Leave blank to generate it from the title."
       />
+      <TagInput
+        label="Category"
+        value={category}
+        onChange={setCategory}
+        pool="projectCategories"
+        single
+        placeholder="e.g. Homelab - type to search or add…"
+        hint="Projects with the same category are grouped together on the Projects tab."
+      />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-ink-muted">
+            Status <span className="text-xs opacity-70">(optional)</span>
+          </span>
+          <select name="status" defaultValue={item?.status ?? ""} className="rounded-md border border-line bg-paper px-3 py-2 text-ink">
+            <option value="">Not specified</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="experiment">Experiment (never really used)</option>
+            <option value="discontinued">Discontinued</option>
+          </select>
+        </label>
+        <Field label="Started" name="startDate" type="date" defaultValue={toDateInput(item?.startDate)} />
+        <Field label="Ended" name="endDate" type="date" defaultValue={toDateInput(item?.endDate)} hint="Blank if ongoing." />
+      </div>
       <Field label="Summary" name="summary" defaultValue={item?.summary} hint="One line shown on the project card." />
       <TextArea label="Description" name="description" defaultValue={item?.description} rows={6} />
       <TagInput
@@ -100,7 +135,7 @@ export function ProjectForm({ item, translation, links }: { links?: { experience
         onChange={setExperienceIds}
         hint="The role(s) this project was done in. The project shows up on that experience's page."
       />
-      <TranslationPanel tr={tr} getSource={() => readFormFields(formRef.current, ["summary", "description"])} />
+      <TranslationPanel tr={tr} getSource={() => ({ ...readFormFields(formRef.current, ["summary", "description"]), category: category[0] ?? "" })} />
       <FormError message={error} />
       <SubmitButton pending={saving} />
     </form>

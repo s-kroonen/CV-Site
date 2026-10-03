@@ -25,6 +25,7 @@ export const TRANSLATABLE: Record<TEntity, FieldSpec[]> = {
     { name: "description", label: "Description", kind: "textarea" },
   ],
   projects: [
+    { name: "category", label: "Category", kind: "text" },
     { name: "summary", label: "Summary", kind: "text" },
     { name: "description", label: "Description", kind: "textarea" },
   ],

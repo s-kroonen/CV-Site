@@ -22,3 +22,24 @@ export function formatDateRange(
   const endLabel = end ? fmt.format(end) : labels.present;
   return `${fmt.format(start as Date)} \u2014 ${endLabel}`;
 }
+
+/**
+ * Year range of a project ("2025 – 2026", "2025 – present" while ongoing, or just "2025").
+ * Empty when no start date is known.
+ */
+export function formatProjectPeriod(
+  start: Date | null,
+  end: Date | null,
+  status: string,
+  lang: Locale,
+  presentLabel: string,
+): string {
+  void lang;
+  if (!start) return end ? String(end.getUTCFullYear()) : "";
+  const from = start.getUTCFullYear();
+  if (end) {
+    const to = end.getUTCFullYear();
+    return to === from ? String(from) : `${from} – ${to}`;
+  }
+  return status === "ongoing" ? `${from} – ${presentLabel}` : String(from);
+}

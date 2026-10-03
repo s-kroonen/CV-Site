@@ -6,6 +6,8 @@ import { fmt, getDictionary } from "@/lib/i18n/dictionary";
 import { localizedPath } from "@/lib/i18n/config";
 import { resolveLang } from "@/lib/i18n/params";
 import { JsonLd } from "@/components/site/JsonLd";
+import { StatusBadge } from "@/components/site/StatusBadge";
+import { formatProjectPeriod } from "@/lib/format";
 import { RelatedList } from "@/components/site/RelatedList";
 import { absoluteUrl, pageMetadata, snippet } from "@/lib/seo";
 import { asImages, asStringArray } from "@/lib/json";
@@ -42,6 +44,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ lang: 
 
   const tech = asStringArray(project.techStack);
   const images = asImages(project.images);
+  const period = formatProjectPeriod(project.startDate, project.endDate, project.status, lang, t.common.present);
   const profile = await getProfile(lang);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -65,7 +68,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ lang: 
           <Link href={localizedPath(lang, "/projects")} className="w-fit text-sm text-ink-muted underline underline-offset-4 hover:text-ink">
             {t.common.backToProjects}
           </Link>
-          <h1 className="font-[family-name:var(--font-display)] text-4xl font-medium">{project.title}</h1>
+          <div className="flex flex-col gap-2">
+            {(project.category || period) && (
+              <p className="font-mono text-xs tracking-wide text-ink-muted uppercase">{[project.category, period].filter(Boolean).join(" · ")}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="font-[family-name:var(--font-display)] text-4xl font-medium">{project.title}</h1>
+              <StatusBadge status={project.status} labels={t.status} />
+            </div>
+          </div>
           {project.summary && <p className="text-ink-muted">{project.summary}</p>}
           {tech.length > 0 && (
             <div className="flex flex-wrap gap-2">

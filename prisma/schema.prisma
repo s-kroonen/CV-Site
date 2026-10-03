@@ -90,6 +90,10 @@ model Project {
   summary     String    @default("")
   description String    @default("")
   techStack   Json // string[]
+  category    String   @default("") // group on the Projects tab, e.g. "Homelab & self-hosting" (translatable)
+  status      String   @default("") // "" | "ongoing" | "completed" | "discontinued" | "experiment"
+  startDate   DateTime?
+  endDate     DateTime?
   repoUrl     String?
   liveUrl     String?
   images      Json // string[]

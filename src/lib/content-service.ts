@@ -73,6 +73,10 @@ export function serializeProject(r: any, withId = false): Row {
     liveUrl: r.liveUrl,
     images: asImages(r.images),
     featured: r.featured,
+    category: r.category ?? "",
+    status: r.status ?? "",
+    startDate: iso(r.startDate),
+    endDate: iso(r.endDate),
     sortIndex: r.sortIndex,
     ...life(r),
   };
@@ -204,9 +208,17 @@ async function prepare(entity: Entity, data: Row, excludeProjectId?: string, mod
     case "projects": {
       const r = projectSchema.safeParse(data);
       if (!r.success) throw new ContentError(formatZodError(r.error));
-      const { repoUrl, liveUrl, slug, experienceIds, ...rest } = r.data;
+      const { repoUrl, liveUrl, slug, experienceIds, startDate, endDate, ...rest } = r.data;
       const finalSlug = slug || (await uniqueProjectSlug(slugify(rest.title), excludeProjectId));
-      return { ...rest, slug: finalSlug, repoUrl: repoUrl || null, liveUrl: liveUrl || null, experiences: rel(experienceIds, mode) };
+      return {
+        ...rest,
+        slug: finalSlug,
+        repoUrl: repoUrl || null,
+        liveUrl: liveUrl || null,
+        startDate: toDate(startDate),
+        endDate: toDate(endDate),
+        experiences: rel(experienceIds, mode),
+      };
     }
     case "skills": {
       const r = skillSchema.safeParse(data);

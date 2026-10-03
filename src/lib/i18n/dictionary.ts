@@ -97,6 +97,13 @@ const en = {
     contactDescription: "Get in touch using the contact form.",
     projectNotFound: "Project not found",
   },
+  status: {
+    ongoing: "Ongoing",
+    completed: "Completed",
+    discontinued: "Discontinued",
+    experiment: "Experiment",
+    other: "Other projects",
+  },
 };
 
 export type Dictionary = typeof en;
@@ -193,6 +200,13 @@ const nl: Dictionary = {
     skillsDescription: "Vaardigheden van {name}: {list}",
     contactDescription: "Neem contact op via het contactformulier.",
     projectNotFound: "Project niet gevonden",
+  },
+  status: {
+    ongoing: "Lopend",
+    completed: "Afgerond",
+    discontinued: "Stopgezet",
+    experiment: "Experiment",
+    other: "Overige projecten",
   },
 };
 

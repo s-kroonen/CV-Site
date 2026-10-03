@@ -111,6 +111,12 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 - [x] Interface text in both languages; content translated per item (hand-written or via a translation API: DeepL or self-hosted LibreTranslate - no LLM), source language per item, "out of date" flag.
 - [x] Admin translation panel, MCP `set_translation`, translations included in export/import, localized PDF, sitemap and llms files per language.
 
+## 10. GitHub projects and education import
+
+- [x] Inventory of all public repos (`docs/github-inventory.md`) with groups and proposed links.
+- [x] Project **category** (grouping on the Projects tab), **status** (ongoing / completed / experiment / discontinued) and period (start/end) - database, admin, public site, translation, import/export, MCP.
+- [ ] After deploy: import the ~28 own repos as projects (basic info), the "study projects" experience linked to education, education items (HBO ICT, HBO TI, HAVO), Jumbo experience, CV profile text as Dutch bio and skills; add the freelance NRG2Fly note.
+
 ## Suggested order
 
 1. Section 1 (forms, tags, button text) - unblocks entering real content.

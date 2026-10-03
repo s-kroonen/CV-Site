@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return Response.json({ error: formatZodError(parsed.error) }, { status: 400 });
   }
 
-  const { repoUrl, liveUrl, slug, experienceIds, ...rest } = parsed.data;
+  const { repoUrl, liveUrl, slug, experienceIds, startDate, endDate, ...rest } = parsed.data;
   // Blank slug -> derived from the title; an explicit one is kept as typed (collision -> 409 below).
   const finalSlug = slug || (await uniqueProjectSlug(slugify(rest.title)));
 
@@ -22,6 +22,8 @@ export async function POST(request: Request) {
         slug: finalSlug,
         repoUrl: repoUrl || null,
         liveUrl: liveUrl || null,
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
         experiences: experienceIds ? { connect: experienceIds.map((id) => ({ id })) } : undefined,
       },
     });

@@ -18,7 +18,10 @@ export async function GET(request: Request) {
     else counts.set(key, { label, n: 1 });
   };
 
-  if (pool === "categories") {
+  if (pool === "projectCategories") {
+    const projects = await prisma.project.findMany({ where: { deletedAt: null }, select: { category: true } });
+    projects.forEach((p) => add(p.category));
+  } else if (pool === "categories") {
     const skills = await prisma.skill.findMany({ where: { deletedAt: null }, select: { category: true } });
     skills.forEach((s) => add(s.category));
   } else {

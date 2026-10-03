@@ -133,7 +133,7 @@ export function TagInput({
   label: string;
   value: string[];
   onChange: (next: string[]) => void;
-  pool?: "tags" | "categories";
+  pool?: "tags" | "categories" | "projectCategories";
   single?: boolean;
   hint?: string;
   placeholder?: string;

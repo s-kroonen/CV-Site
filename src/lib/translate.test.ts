@@ -92,7 +92,7 @@ describe("translation helpers", () => {
 
   it("sanitizes untrusted input to known fields and types", () => {
     const clean = sanitizeFields("projects", { summary: "  s  ", description: 5, evil: "<script>", __proto__: { x: 1 } });
-    expect(clean).toEqual({ summary: "s", description: "" });
+    expect(clean).toEqual({ category: "", summary: "s", description: "" });
     expect(sanitizeFields("experience", { bullets: "a\n\n b " }).bullets).toEqual(["a", "b"]);
   });
 
