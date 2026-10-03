@@ -85,7 +85,18 @@ export function ProjectForm({ item, translation, links }: { links?: { experience
         placeholder="e.g. Homelab - type to search or add…"
         hint="Projects with the same category are grouped together on the Projects tab."
       />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-ink-muted">
+            Type <span className="text-xs opacity-70">(sub-tab on the Projects page)</span>
+          </span>
+          <select name="kind" defaultValue={item?.kind ?? ""} className="rounded-md border border-line bg-paper px-3 py-2 text-ink">
+            <option value="">Not specified (only under All)</option>
+            <option value="personal">Personal</option>
+            <option value="education">Education (school project)</option>
+            <option value="work">Work</option>
+          </select>
+        </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-ink-muted">
             Status <span className="text-xs opacity-70">(optional)</span>

@@ -107,6 +107,12 @@ const en = {
     experiment: "Experiment",
     other: "Other projects",
   },
+  kinds: {
+    all: "All projects",
+    personal: "Personal",
+    education: "Education",
+    work: "Work",
+  },
 };
 
 export type Dictionary = typeof en;
@@ -213,6 +219,12 @@ const nl: Dictionary = {
     discontinued: "Stopgezet",
     experiment: "Experiment",
     other: "Overige projecten",
+  },
+  kinds: {
+    all: "Alle projecten",
+    personal: "Persoonlijk",
+    education: "Opleiding",
+    work: "Werk",
   },
 };
 

@@ -99,6 +99,8 @@ describe("project category, status and period", () => {
     expect(nl?.category).toBe("Thuislab");
     expect((await getProjectBySlug(p.slug, "en"))?.category).toBe("Homelab");
     await expect(createItem("projects", { title: "Bad", status: "finished" })).rejects.toThrow(/status/i);
+    expect(((await createItem("projects", { title: "School", kind: "education" })) as { kind: string }).kind).toBe("education");
+    await expect(createItem("projects", { title: "Bad kind", kind: "hobby" })).rejects.toThrow(/kind/i);
   });
 });
 

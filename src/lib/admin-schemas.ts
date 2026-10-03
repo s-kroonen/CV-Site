@@ -72,6 +72,7 @@ export const educationSchema = z
   .refine((v) => v.institution || v.degree, { message: "Enter an institution or a degree", path: ["institution"] });
 
 /** "" = not specified (no badge). */
+export const PROJECT_KINDS = ["", "personal", "education", "work"] as const;
 export const PROJECT_STATUSES = ["", "ongoing", "on_hold", "completed", "discontinued", "experiment"] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
@@ -106,6 +107,7 @@ export const projectSchema = z.object({
     .default([]),
   featured: z.boolean().default(false),
   category: optionalText(100),
+  kind: z.enum(PROJECT_KINDS).default(""),
   status: z.enum(PROJECT_STATUSES).default(""),
   startDate: optionalDate,
   endDate: optionalDate,

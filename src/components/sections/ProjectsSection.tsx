@@ -26,7 +26,12 @@ export function ProjectsSection({
   limit?: number;
   moreHref?: string;
 }) {
-  const items = limit ? allItems.slice(0, limit) : allItems;
+  const kindTabs = (["all", "personal", "education", "work"] as const).filter(
+    (k) => k === "all" || allItems.some((p) => p.kind === k),
+  );
+  const [kind, setKind] = useState<string>("all");
+  const kindItems = !limit && kind !== "all" ? allItems.filter((p) => p.kind === kind) : allItems;
+  const items = limit ? allItems.slice(0, limit) : kindItems;
   const hasMore = allItems.length > items.length;
   const reduceMotion = useReducedMotion();
   const { lang, t, href } = useLocale();
@@ -150,6 +155,30 @@ export function ProjectsSection({
             </div>
           )}
         </div>
+
+        {!limit && kindTabs.length > 2 && (
+          <div role="tablist" aria-label={t.sections.projects} className="flex flex-wrap gap-2">
+            {kindTabs.map((k) => (
+              <button
+                key={k}
+                role="tab"
+                aria-selected={kind === k}
+                onClick={() => {
+                  setKind(k);
+                  setActiveTag(null);
+                }}
+                className={`rounded-full border px-4 py-1.5 text-sm transition-colors ${
+                  kind === k ? "border-accent bg-accent text-accent-ink" : "border-line text-ink-muted hover:text-ink"
+                }`}
+              >
+                {t.kinds[k]}
+                <span className="ml-1.5 font-mono text-xs opacity-70">
+                  {k === "all" ? allItems.length : allItems.filter((p) => p.kind === k).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {grouped ? (
           groups.map((group) => (

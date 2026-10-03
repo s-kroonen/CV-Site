@@ -74,6 +74,7 @@ export function serializeProject(r: any, withId = false): Row {
     images: asImages(r.images),
     featured: r.featured,
     category: r.category ?? "",
+    kind: r.kind ?? "",
     status: r.status ?? "",
     startDate: iso(r.startDate),
     endDate: iso(r.endDate),

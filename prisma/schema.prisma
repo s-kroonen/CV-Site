@@ -92,6 +92,7 @@ model Project {
   techStack   Json // string[]
   category    String   @default("") // group on the Projects tab, e.g. "Homelab & self-hosting" (translatable)
   status      String   @default("") // "" | "ongoing" | "on_hold" | "completed" | "discontinued" | "experiment"
+  kind        String   @default("") // "" | "personal" | "education" | "work" - which Projects sub-tab it appears under
   startDate   DateTime?
   endDate     DateTime?
   repoUrl     String?
