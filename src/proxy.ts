@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, isValidAdminSession } from "@/lib/admin-session";
-import { syncGate } from "@/lib/site-role";
+import { FORWARDED_HEADER, FORWARDED_HOST_HEADER, FORWARDED_PROTO_HEADER, knownHosts, syncGate } from "@/lib/site-role";
 import { LOCALE_COOKIE, localizedPath, negotiateLocale, splitLocale, isLocale } from "@/lib/i18n/config";
 
 const PUBLIC_PREFIXES = [
@@ -30,15 +30,27 @@ function adminGate(request: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const loginUrl = new URL("/admin/login", request.url);
-  return NextResponse.redirect(loginUrl);
+  // A request passed on from the other host arrives with this host's own name; send the browser back to the
+  // name it actually used (only if that is one of our known hostnames).
+  const fwdHost = request.headers.get(FORWARDED_HOST_HEADER);
+  const fwdProto = request.headers.get(FORWARDED_PROTO_HEADER) === "http" ? "http" : "https";
+  const base = fwdHost && request.headers.has(FORWARDED_HEADER) && knownHosts().has(fwdHost) ? `${fwdProto}://${fwdHost}` : request.url;
+  return NextResponse.redirect(new URL("/admin/login", base));
 }
 
 function route(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Two-host sync: answer 503 while this host is still catching up, and refuse edits unless it may write.
-  const gate = syncGate(pathname);
+  // Two-host sync: answer 503 while this host is still catching up. Edits this host may not take are passed on
+  // to the host that does (an external rewrite is a reverse proxy); if that is not possible they are refused.
+  const gate = syncGate(pathname, request.headers.has(FORWARDED_HEADER));
+  if (gate && "forwardTo" in gate) {
+    const headers = new Headers(request.headers);
+    headers.set(FORWARDED_HEADER, "1");
+    headers.set(FORWARDED_HOST_HEADER, request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "");
+    headers.set(FORWARDED_PROTO_HEADER, request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", ""));
+    return NextResponse.rewrite(new URL(`${pathname}${request.nextUrl.search}`, gate.forwardTo), { request: { headers } });
+  }
   if (gate) {
     return new Response(
       pathname.startsWith("/api/") ? JSON.stringify({ error: gate.message }) : gate.message,

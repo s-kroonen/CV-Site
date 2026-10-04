@@ -11,9 +11,9 @@ import { canRegisterPasskey, issueBootstrapToken } from "@/lib/bootstrap-token";
 import { createItem, listItems } from "@/lib/content-service";
 import { dbFilePath } from "@/lib/db-path";
 import { prisma } from "@/lib/prisma";
-import { stateFile, syncGate, writeSyncStatus, type SyncStatus } from "@/lib/site-role";
+import { knownHosts, stateFile, syncGate, writeSyncStatus, type SyncStatus } from "@/lib/site-role";
 import { authorizeSync, createSnapshot, ensureRevisionSeeded, readLocalState, removeFile, sha256File, type Snapshot } from "@/lib/sync";
-import { applyDatabaseFile, computeWritable, decide, resetEngineForTests, syncRound } from "@/lib/sync-engine";
+import { applyDatabaseFile, computeWritable, decide, isGatewayError, resetEngineForTests, syncRound } from "@/lib/sync-engine";
 import { uploadDir } from "@/lib/uploads";
 import { expectedOrigin, rpID } from "@/lib/webauthn";
 import { resetDb } from "@/test/db";
@@ -117,6 +117,8 @@ describe("decide", () => {
     const peer = { revision: 4, token: "peer" };
     expect(decide({ revision: 0, token: "e" }, peer, null, true)).toBe("pull");
     expect(decide(me, { revision: 0, token: "e" }, null, false)).toBe("wait");
+    expect(decide({ revision: 0, token: "a" }, { revision: 0, token: "b" }, null, false)).toBe("pull"); // both empty
+    expect(decide({ revision: 0, token: "a" }, { revision: 0, token: "b" }, null, true)).toBe("wait");
     expect(decide(me, peer, null, true)).toBe("wait");
     expect(decide(me, peer, null, false)).toBe("pull");
   });
@@ -189,6 +191,16 @@ describe("sync rounds", () => {
     await Promise.all([agreed, peerSnapshot].map((s) => removeFile(s.file)));
   });
 
+  it("a proxy answering 502/503/504 for a stopped host counts as down, so the standby takes over", async () => {
+    process.env.SITE_ROLE = "standby";
+    setBase((await readLocalState()).token);
+    for (const code of [502, 503, 504, 522]) {
+      vi.stubGlobal("fetch", async () => new Response("bad gateway", { status: code }));
+      expect(await syncRound(), String(code)).toMatchObject({ peerReachable: false, canWrite: true });
+    }
+    expect([401, 403, 404, 500].some(isGatewayError)).toBe(false);
+  });
+
   it("refuses to write while it is behind the peer and the pull fails", async () => {
     await createItem("skills", { name: "Shared" });
     setBase((await readLocalState()).token);
@@ -256,6 +268,7 @@ describe("gate, health and endpoints", () => {
     reason: "main host",
     preferred: true,
     peerReachable: true,
+    peerCanWrite: false,
     token: "t",
     peerToken: "t",
     lastSyncAt: null,
@@ -271,7 +284,7 @@ describe("gate, health and endpoints", () => {
 
   it("answers 503 until the first sync round has finished, then lets pages through", async () => {
     await setStatus(status({ ready: false, canWrite: false, reason: "starting" }));
-    expect(syncGate("/en/projects")?.status).toBe(503);
+    expect(syncGate("/en/projects")).toMatchObject({ status: 503 });
     expect((await healthRoute()).status).toBe(503);
     expect(syncGate("/api/health")).toBeNull();
     expect(syncGate("/api/sync/state")).toBeNull();
@@ -282,14 +295,27 @@ describe("gate, health and endpoints", () => {
 
   it("refuses edits, logins, tokens and messages while this host may not write, but not public reads", async () => {
     await setStatus(status({ canWrite: false, reason: "the main host is up" }));
-    for (const p of ["/admin/projects", "/api/admin/projects", "/api/mcp", "/oauth/token", "/api/contact"]) expect(syncGate(p)?.status, p).toBe(503);
+    for (const p of ["/admin/projects", "/api/admin/projects", "/api/mcp", "/oauth/token", "/api/contact"]) expect(syncGate(p), p).toMatchObject({ status: 503 });
     for (const p of ["/en/projects", "/api/contact-info", "/api/cv.json", "/uploads/x.png"]) expect(syncGate(p), p).toBeNull();
     expect((await writableRoute()).status).toBe(503);
   });
 
+  it("passes an edit on to the peer when the peer is taking edits, but never back and never during a conflict", async () => {
+    process.env.SYNC_PEER_URL = "https://amber.test";
+    await setStatus(status({ canWrite: false, reason: "the main host is up", preferred: false, peerCanWrite: true }));
+    expect(syncGate("/api/admin/projects")).toEqual({ forwardTo: "https://amber.test" });
+    expect(syncGate("/admin/projects")).toEqual({ forwardTo: "https://amber.test" });
+    expect(syncGate("/api/admin/projects", true)).toMatchObject({ status: 503 }); // already passed on once
+    expect(syncGate("/en/projects")).toBeNull(); // public pages are served locally
+    await setStatus(status({ canWrite: false, preferred: false, peerCanWrite: false }));
+    expect(syncGate("/api/admin/projects")).toMatchObject({ status: 503 });
+    await setStatus(status({ canWrite: false, preferred: false, peerCanWrite: true, conflict: true }));
+    expect(syncGate("/api/admin/projects")).toMatchObject({ status: 503 });
+  });
+
   it("treats an old status file as 'not writable' (the sync loop stopped)", async () => {
     await setStatus(status({ updatedAt: Date.now() - 10 * 60_000 }));
-    expect(syncGate("/api/admin/projects")?.status).toBe(503);
+    expect(syncGate("/api/admin/projects")).toMatchObject({ status: 503 });
   });
 
   it("does nothing without a peer configured", () => {
@@ -312,6 +338,15 @@ describe("gate, health and endpoints", () => {
     const params = (name: string) => ({ params: Promise.resolve({ name }) });
     expect((await uploadRoute(req("/x"), params("../secret.db"))).status).toBe(404);
     expect((await uploadRoute(req("/x"), params("missing.png"))).status).toBe(404);
+  });
+});
+
+describe("known hostnames", () => {
+  it("are SITE_URL plus WEBAUTHN_ORIGINS, so a hostname passed on by the peer can be checked", () => {
+    process.env.SITE_URL = "https://storm.kroon-en.nl";
+    process.env.WEBAUTHN_ORIGINS = "https://storm.amber.kroon-en.nl, http://localhost:3000, not a url";
+    expect([...knownHosts()].sort()).toEqual(["localhost:3000", "storm.amber.kroon-en.nl", "storm.kroon-en.nl"]);
+    expect(knownHosts().has("evil.example")).toBe(false);
   });
 });
 

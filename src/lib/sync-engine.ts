@@ -33,6 +33,7 @@ export function decide(me: LocalState, peer: Pick<PeerState, "token" | "revision
   // We never recorded an agreement, but the peer did and it was with exactly our current data: it only moved on.
   if (base === null && peer.base && peer.base === me.token) return "pull";
   if (base === null) {
+    if (me.revision === 0 && peer.revision === 0) return preferred ? "wait" : "pull"; // both empty: the standby adopts the marker
     if (peer.revision === 0) return "wait";
     if (me.revision === 0) return "pull";
     return preferred ? "wait" : "pull";
@@ -71,7 +72,14 @@ class PeerHttpError extends Error {
   }
 }
 
-/** A thrown PeerHttpError means the peer answered (so it is up); any other error means it could not be reached. */
+/**
+ * A reverse proxy in front of a stopped app still answers, with a gateway error. That is "the host is down", not
+ * "the host is up", so these statuses count as unreachable (otherwise the standby never takes over while NPM or
+ * Traefik on the other side keeps replying 502).
+ */
+export const isGatewayError = (status: number) => status === 502 || status === 503 || status === 504 || (status >= 520 && status <= 530);
+
+/** A thrown PeerHttpError means something answered; only a gateway error counts as the host being down. */
 async function peerGet(pathname: string, timeoutMs: number): Promise<Response> {
   const res = await fetch(`${peerUrl()}${pathname}`, {
     headers: { Authorization: `Bearer ${syncToken()}` },
@@ -191,7 +199,7 @@ export async function syncRound(): Promise<SyncStatus> {
     peer = (await (await peerGet("/api/sync/state", 5_000)).json()) as PeerState;
     peerReachable = true;
   } catch (error) {
-    peerReachable = error instanceof PeerHttpError; // it answered, just not with what we need
+    peerReachable = error instanceof PeerHttpError && !isGatewayError(error.status); // the app answered, just not with what we need
     engine.lastError = error instanceof Error ? error.message : String(error);
   }
 
@@ -252,6 +260,7 @@ export async function syncRound(): Promise<SyncStatus> {
     reason,
     preferred,
     peerReachable,
+    peerCanWrite: !!peer?.canWrite,
     token: me.token,
     peerToken: peer?.token ?? null,
     lastSyncAt: engine.lastSyncAt,
@@ -284,6 +293,7 @@ export function startSyncEngine() {
     reason: "starting",
     preferred: isPreferred(),
     peerReachable: false,
+    peerCanWrite: false,
     token: null,
     peerToken: null,
     lastSyncAt: null,

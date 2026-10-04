@@ -14,7 +14,19 @@ kept in step by pulling snapshots from each other over HTTPS. Nothing is merged.
 
 - **Both up:** the preferred host takes all edits. The standby pulls the new data every few seconds and
   serves the public site.
-- **Preferred down:** the standby takes over edits, using the data it last pulled.
+- **An edit that reaches the standby while the preferred host is up** (a weighted proxy, a flapping health
+  check, a misconfigured route) is **passed on to the preferred host** by the standby, which acts as a reverse
+  proxy for `/admin`, `/api/admin`, `/api/mcp`, `/oauth` and `/api/contact`. The browser keeps using the same
+  hostname and the answer carries the preferred host's `X-Served-By`. So the Traefik write routing below is
+  recommended but not required. The standby never takes the edit itself while the preferred host is up, and a
+  request is never passed on twice.
+- **Preferred down:** the standby takes over edits, using the data it last pulled. The admin on
+  `storm.kroon-en.nl` works from the standby.
+- **What counts as "down":** the peer's sync endpoint does not answer (timeout, connection refused) **or its
+  reverse proxy answers with a gateway error** (502, 503, 504, or Cloudflare's 520-530 range), which is what NPM
+  or Traefik reply when the app container behind them is stopped. Any other answer (including 401 for a wrong
+  `SYNC_TOKEN`, or 404) means the peer is up, so the standby keeps standing down: wrong keys cannot cause two
+  writers. A host that is up but misconfigured shows its problem in `/api/health` (`error`).
 - **Standby down:** the preferred host does everything.
 - **A host that (re)starts answers 503 on every page until its first sync round has finished** (a few
   seconds), so the proxy keeps sending traffic to the other host meanwhile. If the peer is unreachable the
@@ -29,7 +41,10 @@ kept in step by pulling snapshots from each other over HTTPS. Nothing is merged.
 - **Edits made in the last few seconds before a host dies** (`SYNC_INTERVAL_SECONDS`, default 15) can be lost
   to the other host.
 - A standby that has **never synced** with the preferred host will not take edits when the preferred host is
-  down. Start both hosts once while both are reachable.
+  down. Start both hosts once while both are reachable (`/api/health` shows `lastSyncAt`).
+- "Editing is not available on this host right now (the main host is up)" means a request reached the standby
+  and could **not** be passed on: the preferred host has just stopped answering, or is catching up. Wait a
+  few seconds; if it persists, check `/api/health` on both hosts.
 
 ## How it works
 
@@ -147,8 +162,8 @@ http:
         fallback: cv-amber-up
 ```
 
-The standby refuses edits itself (503) while the preferred host is up, so a routing mistake cannot create two
-diverging databases. If a Traefik decision and the app disagree, the app wins.
+The standby never takes edits itself while the preferred host is up (it passes them on, or refuses with 503), so a
+routing mistake cannot create two diverging databases. If a Traefik decision and the app disagree, the app wins.
 
 ## Passkeys on every name
 

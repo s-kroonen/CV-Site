@@ -21,6 +21,7 @@ export type SyncStatus = {
   reason: string; // short human explanation of canWrite/conflict
   preferred: boolean;
   peerReachable: boolean;
+  peerCanWrite: boolean; // the peer says it is taking edits (so a refused edit can be passed on to it)
   token: string | null; // state marker of the local data
   peerToken: string | null;
   lastSyncAt: string | null;
@@ -65,15 +66,41 @@ const OPEN_PATHS = ["/api/health", "/api/sync"];
 
 const under = (pathname: string, prefix: string) => pathname === prefix || pathname.startsWith(`${prefix}/`);
 
-export type Gate = { status: 503; message: string } | null;
+export type Gate = { status: 503; message: string } | { forwardTo: string } | null;
 
-/** Decides whether a request may be handled now. Returns null to let it through. */
-export function syncGate(pathname: string): Gate {
+/** Hostnames this site is served under (SITE_URL plus WEBAUTHN_ORIGINS); used to trust a hostname passed on by the peer. */
+export function knownHosts(): Set<string> {
+  const hosts = new Set<string>();
+  for (const raw of [process.env.SITE_URL ?? "", ...(process.env.WEBAUTHN_ORIGINS ?? "").split(",")]) {
+    try {
+      if (raw.trim()) hosts.add(new URL(raw.trim()).host);
+    } catch {
+      // ignore malformed entries
+    }
+  }
+  return hosts;
+}
+
+export const FORWARDED_HOST_HEADER = "x-cv-forwarded-host";
+export const FORWARDED_PROTO_HEADER = "x-cv-forwarded-proto";
+
+/** Set on a request this host passes to its peer, so the peer never passes it back. */
+export const FORWARDED_HEADER = "x-cv-forwarded";
+
+/**
+ * Decides whether a request may be handled now. Returns null to let it through, a 503 to refuse it, or
+ * `forwardTo` (the peer's URL) when this host may not take the edit but the peer is taking edits: the request is then
+ * passed on to the peer, so a proxy that sends edits to the wrong host (e.g. a weighted setup) still works.
+ */
+export function syncGate(pathname: string, forwarded = false): Gate {
   if (!syncConfigured()) return null;
   if (OPEN_PATHS.some((p) => under(pathname, p))) return null;
   const status = readSyncStatus();
   if (!status || !status.ready) return { status: 503, message: "Starting: syncing the latest content. Try again in a moment." };
   if (WRITE_PATHS.some((p) => under(pathname, p)) && !writableNow(status)) {
+    if (!forwarded && !status.conflict && status.peerReachable && status.peerCanWrite && statusIsFresh(status)) {
+      return { forwardTo: peerUrl() };
+    }
     return { status: 503, message: `Editing is not available on this host right now (${status.reason}). Use the main host.` };
   }
   return null;
