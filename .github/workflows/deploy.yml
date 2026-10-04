@@ -53,13 +53,13 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     strategy:
-      # Add 'secondary' back once that host exists and its
-      # SECONDARY_PORTAINER_URL/TOKEN/STACK_ID/ENDPOINT_ID secrets are set -
-      # until then it would fail every run (empty secrets) and since a matrix
-      # job's overall status is failure if any leg fails, that would also
-      # block sync-db below via needs: deploy.
+      # Both hosts get the same image. One failing must not cancel the other.
+      fail-fast: false
       matrix:
-        host: [ primary ]
+        host: [ primary, secondary ]
+    # The "secondary" host is the one that is often switched off: a redeploy that cannot reach it
+    # is a warning, not a failed pipeline. It picks up the new image on its next redeploy.
+    continue-on-error: ${{ matrix.host == 'secondary' }}
     steps:
       - name: Redeploy on ${{ matrix.host }}
         run: |
@@ -72,6 +72,10 @@ jobs:
           # is what blanked SESSION_SECRET etc.). So read the stack's current
           # env from Portainer and send it back unchanged. Values are never
           # printed, and an empty env aborts instead of deploying a broken stack.
+          if [ -z "$BASE" ] || [ -z "$SID" ]; then
+            echo "::warning::No Portainer secrets for ${{ matrix.host }}; skipping this host."
+            exit 0
+          fi
           ENV_JSON=$(curl -fsSL "$BASE/api/stacks/$SID" -H "X-API-Key: $TOKEN" | jq -c '.Env // []')
           if [ "$ENV_JSON" = "[]" ]; then
             echo "::error::Stack $SID has no environment variables set in Portainer; refusing to redeploy."
@@ -82,16 +86,3 @@ jobs:
             "$BASE/api/stacks/$SID/git/redeploy?endpointId=$EID" \
             -H "X-API-Key: $TOKEN" -H "Content-Type: application/json" \
             -d "$BODY" > /dev/null
-
-  sync-db:
-    needs: deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger DB sync on primary
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.PRIMARY_SSH_HOST }}
-          port: ${{ secrets.PRIMARY_SSH_PORT }}
-          username: sync
-          key: ${{ secrets.SYNC_SSH_KEY }}
-          script: "sync"        # ignored — the forced command runs /opt/sync/sync-cv-site.sh

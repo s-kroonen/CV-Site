@@ -9,22 +9,21 @@ via Cloudflare's WAF/proxy features.
 
 - **Content** lives in a SQLite file per host, edited live through the
   passkey-protected `/admin` panel - not baked into the image.
-- **Redundancy**: both hosts run the full stack; the primary's DB is
-  replicated to the secondary on a schedule (see [DB sync](#5-db-sync)) so the
-  secondary is a warm standby, not just a static error page.
+- **Redundancy**: both hosts run the full stack and keep their databases in
+  step by pulling from each other (see [DB sync](#5-db-sync) and
+  [REDUNDANCY.md](REDUNDANCY.md)), so either can serve and take edits.
 - **CI/CD**: GitHub Actions builds, scans, and pushes an image to GHCR, then
-  triggers a redeploy on each host via its Portainer API (git-based stacks),
-  followed by a DB sync trigger over a restricted SSH command (see
-  [DB sync](#5-db-sync)).
+  triggers a redeploy on each host via its Portainer API (git-based stacks).
 
 ## 1. One-time GitHub repo setup
 
 ### Secrets
 
-Add these under **Settings → Secrets and variables → Actions**. Currently
-only `PRIMARY_*` is configured (testing with one host) - add the `SECONDARY_*`
-equivalents once that host exists, and add `secondary` back to the `deploy`
-job's matrix in `deploy.yml` at the same time.
+Add these under **Settings → Secrets and variables → Actions**. Add the
+`PRIMARY_*` set for one host and the `SECONDARY_*` equivalents for the other
+(the `deploy` job in `deploy.yml` skips a host whose secrets are missing, and a
+failure to reach the `secondary` host - the one that is often switched off - is
+only a warning).
 
 | Secret | Value |
 | --- | --- |
@@ -32,9 +31,6 @@ job's matrix in `deploy.yml` at the same time.
 | `PRIMARY_PORTAINER_TOKEN` | A Portainer API access token: Portainer UI → user menu → **My account** → **Access tokens** → **Add access token**. Scope it as tightly as Portainer allows |
 | `PRIMARY_STACK_ID` | Numeric ID of the git-based stack for this app: **Stacks** → click it → ID is in the URL, or `GET /api/stacks` |
 | `PRIMARY_ENDPOINT_ID` | Numeric ID of the Portainer environment that stack lives on: **Environments** → click it → ID in the URL, or `GET /api/endpoints` |
-| `PRIMARY_SSH_HOST` | SSH host for triggering the DB sync (kept as a secret, not a plain variable, along with the port below - both reveal details about how the primary host's SSH is reachable) |
-| `PRIMARY_SSH_PORT` | SSH port for that connection |
-| `SYNC_SSH_KEY` | Private key for the restricted `sync` user whose `authorized_keys` forces a fixed sync command (set up via your Ansible playbooks) - **never** the host's primary/admin SSH key |
 
 The stack itself must already exist in Portainer as a **git-based stack**
 pointing at this repo with `docker-compose.yml` (repo root) as the compose
@@ -227,33 +223,11 @@ propagate).
 
 ## 5. DB sync
 
-Sync execution itself now lives outside this repo, in Ansible playbooks that
-provision a restricted `sync` user on the primary host - its
-`authorized_keys` entry forces a fixed command (e.g.
-`command="/opt/sync/sync-cv-site.sh" ssh-ed25519 ...`) regardless of what's
-actually passed over SSH, so `SYNC_SSH_KEY` can only ever trigger that one
-script, nothing else. `deploy.yml`'s `sync-db` job just opens that SSH
-connection after every deploy to kick it off - it doesn't pass parameters or
-know what the script does internally.
-
-`scripts/sync-db.sh` in this repo is kept as the reference implementation of
-*what that sync should do*: take a consistent online backup of the primary's
-SQLite file via `better-sqlite3`'s backup API (not a raw file copy - safe
-even while the app is actively writing), then ship it to the secondary. If
-your Ansible-provisioned script diverges from this, keep this file updated
-to match so it stays useful as documentation, or cron it directly instead if
-you'd rather not maintain the Ansible side:
-
-```bash
-# crontab -e on the PRIMARY host
-*/15 * * * * CONTAINER_NAME=cv-site-web SYNC_REMOTE_HOST=deploy@secondary.example.com SYNC_REMOTE_PATH=/opt/cv-site/data/db /opt/cv-site/scripts/sync-db.sh >> /var/log/cv-site-sync.log 2>&1
-```
-
-Adjust `SYNC_REMOTE_PATH` to wherever the secondary's `db_data` volume is
-actually mounted on disk (check with `docker volume inspect cv-site_db_data`
-on the secondary). None of this applies yet while only the primary host
-exists - the `sync-db` job is safe to leave wired up, but there's nowhere to
-sync to until the secondary is provisioned.
+The two hosts keep their databases and uploads in step by pulling from each
+other over HTTPS; nothing is pushed over SSH any more. See
+[REDUNDANCY.md](REDUNDANCY.md) for the design, the settings and the Traefik
+config. (The old SSH `sync-db` job and `scripts/sync-db.sh` are gone: they
+copied one way only and would have overwritten edits made on the other host.)
 
 ## 6. Verifying a deploy
 

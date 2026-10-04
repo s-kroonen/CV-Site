@@ -59,6 +59,8 @@ services:
       LIBRETRANSLATE_API_KEY: ${LIBRETRANSLATE_API_KEY:-}
       # Optional two-host redundancy (see docs/REDUNDANCY.md). Set SYNC_PEER_URL and the same SYNC_TOKEN on both hosts;
       # SITE_ROLE is "preferred" on the host that normally takes edits and "standby" on the other.
+      # Shown in the X-Served-By header and /api/health so you can tell which host answered (e.g. "amber", "main").
+      SITE_NAME: ${SITE_NAME:-}
       SITE_ROLE: ${SITE_ROLE:-preferred}
       SYNC_PEER_URL: ${SYNC_PEER_URL:-}
       SYNC_TOKEN: ${SYNC_TOKEN:-}

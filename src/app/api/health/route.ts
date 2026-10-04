@@ -7,13 +7,15 @@ export const dynamic = "force-dynamic";
  * so traffic keeps going to the other host while this one catches up.
  */
 export async function GET() {
-  if (!syncConfigured()) return Response.json({ status: "ok", sync: false });
+  const host = process.env.SITE_NAME?.trim() || null;
+  if (!syncConfigured()) return Response.json({ status: "ok", sync: false, host });
   const status = readSyncStatus();
   const ready = !!status?.ready;
   return Response.json(
     {
       status: ready ? "ok" : "syncing",
       sync: true,
+      host,
       role: status?.preferred === false ? "standby" : "preferred",
       canWrite: !!status?.canWrite,
       reason: status?.reason ?? "starting",

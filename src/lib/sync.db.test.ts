@@ -1,5 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as healthRoute } from "@/app/api/health/route";
 import { GET as writableRoute } from "@/app/api/health/writable/route";
@@ -11,7 +12,7 @@ import { createItem, listItems } from "@/lib/content-service";
 import { dbFilePath } from "@/lib/db-path";
 import { prisma } from "@/lib/prisma";
 import { stateFile, syncGate, writeSyncStatus, type SyncStatus } from "@/lib/site-role";
-import { authorizeSync, createSnapshot, ensureRevisionSeeded, readLocalState, removeFile, type Snapshot } from "@/lib/sync";
+import { authorizeSync, createSnapshot, ensureRevisionSeeded, readLocalState, removeFile, sha256File, type Snapshot } from "@/lib/sync";
 import { applyDatabaseFile, computeWritable, decide, resetEngineForTests, syncRound } from "@/lib/sync-engine";
 import { uploadDir } from "@/lib/uploads";
 import { expectedOrigin, rpID } from "@/lib/webauthn";
@@ -222,6 +223,21 @@ describe("sync rounds", () => {
     expect(kept).toHaveLength(1);
     rmSync(path.join(path.dirname(dbFilePath()), kept[0]), { force: true });
     await Promise.all([agreed, peerSnapshot].map((s) => removeFile(s.file)));
+  });
+
+  it("refuses a database made by a different version of the site (other migrations)", async () => {
+    const snapshot = await createSnapshot();
+    const db = new Database(snapshot.file);
+    db.exec(
+      "INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, started_at, applied_steps_count) VALUES ('x','x',CURRENT_TIMESTAMP,'99999999999999_from_the_future',CURRENT_TIMESTAMP,1)",
+    );
+    db.close();
+    const incoming = `${dbFilePath()}.incoming`;
+    copyFileSync(snapshot.file, incoming);
+    const sha = await sha256File(incoming);
+    await expect(applyDatabaseFile(incoming, sha)).rejects.toThrow(/different version/);
+    expect(existsSync(incoming)).toBe(false);
+    await removeFile(snapshot.file);
   });
 
   it("refuses a database that does not match its checksum", async () => {

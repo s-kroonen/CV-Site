@@ -34,7 +34,7 @@ function adminGate(request: NextRequest) {
   return NextResponse.redirect(loginUrl);
 }
 
-export function proxy(request: NextRequest) {
+function route(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Two-host sync: answer 503 while this host is still catching up, and refuse edits unless it may write.
@@ -69,6 +69,14 @@ export function proxy(request: NextRequest) {
     res.cookies.set(LOCALE_COOKIE, lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   }
   return res;
+}
+
+/** Handles the request and tags the answer with the host's name (SITE_NAME), so you can see which host replied. */
+export function proxy(request: NextRequest) {
+  const response = route(request);
+  const name = process.env.SITE_NAME?.trim();
+  if (name) response.headers.set("X-Served-By", name);
+  return response;
 }
 
 export const config = {

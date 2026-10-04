@@ -40,8 +40,9 @@ wait (the peer pulls); both moved means conflict. Pulls are checksum-verified; u
 the new database never points at a missing image. A test checks that every table has the triggers, so a table
 added later cannot be forgotten.
 
-> The older SSH-based `sync-db` job in `deploy.yml` and `scripts/sync-db.sh` (DEPLOYMENT.md section 5) copy
-> the database in one direction only. Turn them off when you use this: they would overwrite edits.
+> The SSH-based `sync-db` deploy job and `scripts/sync-db.sh` that used to exist copied the database one way
+> only. They were removed; the Actions secrets `PRIMARY_SSH_HOST`, `PRIMARY_SSH_PORT` and `SYNC_SSH_KEY`
+> are no longer used and can be deleted, together with the restricted `sync` user on the host.
 
 ## Settings
 
@@ -62,11 +63,16 @@ Per instance:
 | --- | --- | --- |
 | `SITE_ROLE` | `preferred` | `standby` |
 | `SYNC_PEER_URL` | `https://storm-main.kroon-en.nl` | `https://storm.amber.kroon-en.nl` |
+| `SITE_NAME` (optional) | `amber` | `main` |
+
+`SITE_NAME` puts an `X-Served-By` header on every response and `host` in `/api/health`, so you can see which host answered.
 
 `SYNC_PEER_URL` must be a name that reaches the other instance **directly**. Do not use `storm.kroon-en.nl`,
 because Traefik routes that name to whichever host currently takes edits. `storm-main.kroon-en.nl` below is a
 hostname that goes straight to the standby with no failover. Both instances must run the **same image
-version** (deploy both; the schema travels with the data).
+version**: a host refuses to adopt the other's database when their migrations differ (`/api/health` then shows
+"different version"), so redeploy the stale host. The standby, being often off, may wake up on an older image;
+redeploy it from Portainer (or re-run the Deploy workflow) when it comes online.
 
 Without `SYNC_PEER_URL` the site runs standalone and none of this applies.
 
@@ -171,6 +177,35 @@ Keep the old passkey row until the new one is confirmed working.
 
 Verify only `storm.kroon-en.nl` in Search Console and submit its sitemap. Both hosts serve identical pages
 whose `<link rel="canonical">` points at the main name. Set `GOOGLE_SITE_VERIFICATION` on both instances.
+
+## Testing it
+
+Use `curl -si` (shows headers) or the browser's network tab. `X-Served-By` names the host that answered.
+
+1. **Each host is up and sees its peer:** `curl -s https://storm.amber.kroon-en.nl/api/health` and the same on
+   `storm-main.kroon-en.nl` (or the main host's own address). Look for `status: ok`, `peerReachable: true`,
+   `canWrite` (`true` on amber, `false` on the main host while amber is up) and a recent `lastSyncAt`.
+2. **Sync key works:** `curl -s -H "Authorization: Bearer $SYNC_TOKEN" https://storm.amber.kroon-en.nl/api/sync/state`
+   returns JSON with a `token`; without the header it returns `401`.
+3. **Edits arrive:** change something small in the admin (e.g. a skill name). Within `SYNC_INTERVAL_SECONDS` the other
+   host shows it: `curl -s "https://storm-main.kroon-en.nl/api/cv.json?lang=en"`. Both hosts' `/api/sync/state` return the
+   same `token` when they are level.
+4. **Which host is used:** `curl -si https://storm.kroon-en.nl/en | grep -i x-served-by` should say `main` while it is up;
+   `curl -si -X POST https://storm.kroon-en.nl/api/admin/projects | grep -i x-served-by` should say `amber` (the write
+   routes go to the preferred host).
+5. **Failover:** stop the amber stack. Within a few seconds `https://storm-main.kroon-en.nl/api/health/writable` returns
+   `200`, and the admin on `storm.kroon-en.nl` works with `X-Served-By: main`. Start amber again: it answers `503` until it
+   has pulled, then `X-Served-By: amber` is back on the admin and the main host's `/api/health/writable` returns `503`.
+6. **Starting up:** stop the main host's stack, start it again and poll `/api/health`: `503 syncing` first, then `200`.
+
+## Which settings go where
+
+- `SYNC_TOKEN` and the other shared settings (`SESSION_SECRET`, `SITE_URL`, `WEBAUTHN_*`): **set on both hosts, same value**.
+  Changing the sync key means changing it in both stacks and redeploying both (sync pauses until they match).
+- A new **passkey** is created **once**, on the host that takes edits (amber, via `storm.kroon-en.nl` or
+  `storm.amber…`). It is stored in the database and reaches the other host with the next sync. Run the
+  "additional passkey" command on that host only. The setup page needs the host to be writable, so on the standby
+  it answers `503` while amber is up.
 
 ## Checks
 

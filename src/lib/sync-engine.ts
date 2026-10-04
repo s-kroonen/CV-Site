@@ -1,3 +1,4 @@
+import Database from "better-sqlite3";
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { dbFilePath } from "@/lib/db-path";
@@ -93,6 +94,16 @@ async function saveBase(baseToken: string) {
   await writeFile(stateFile(), JSON.stringify({ baseToken }));
 }
 
+/** Names of the finished migrations in a database file: the schema version of the code that last ran on it. */
+function appliedMigrations(file: string): string[] {
+  const db = new Database(file, { readonly: true, fileMustExist: true });
+  try {
+    return db.prepare("SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL ORDER BY migration_name").all().map((r) => (r as { migration_name: string }).migration_name);
+  } finally {
+    db.close();
+  }
+}
+
 /** Puts a verified database file in place of the live one and makes the app reopen it. */
 export async function applyDatabaseFile(incoming: string, expectedSha256: string): Promise<void> {
   const actual = await sha256File(incoming);
@@ -101,6 +112,12 @@ export async function applyDatabaseFile(incoming: string, expectedSha256: string
     throw new Error("Downloaded database does not match its checksum");
   }
   const target = dbFilePath();
+  // Both hosts must run the same version: a database from newer (or older) code does not fit this code.
+  const theirs = appliedMigrations(incoming).join("|");
+  if (theirs !== appliedMigrations(target).join("|")) {
+    await rm(incoming, { force: true });
+    throw new Error("The other host runs a different version of the site (database schema differs). Deploy the same image on both hosts.");
+  }
   await resetPrismaClient(); // release the file first (required on Windows; harmless elsewhere)
   await rename(incoming, target); // atomic: any connection still open keeps the old file until it reconnects
   await Promise.all(["-wal", "-shm", "-journal"].map((suffix) => rm(`${target}${suffix}`, { force: true })));

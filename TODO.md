@@ -132,5 +132,5 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 - [x] A host answers 503 (pages and `/api/health`) until its first sync round is done; `/api/health/writable` for the proxy's write routes.
 - [x] Passkeys across hostnames: `WEBAUTHN_RP_ID` / `WEBAUTHN_ORIGINS`, plus "additional passkey" setup links.
 - [x] Verified with two real server processes (boot 503 -> 200, failover, edit while the other host is down, catch-up).
-- [ ] Deploy: env on both stacks, Traefik routers (docs), register the new passkey, turn off the old SSH `sync-db` job, verify `storm.kroon-en.nl` in Search Console.
+- [ ] Deploy: env on both stacks, Traefik routers (docs), register the new passkey, delete the unused SSH sync secrets and `sync` user, verify `storm.kroon-en.nl` in Search Console.
 - [ ] Not yet run as Docker images in production.

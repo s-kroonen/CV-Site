@@ -3,6 +3,8 @@ declare module "better-sqlite3" {
   export default class Database {
     constructor(filename: string, options?: { readonly?: boolean; fileMustExist?: boolean });
     backup(destination: string): Promise<unknown>;
+    prepare(sql: string): { all(...params: unknown[]): unknown[] };
+    exec(sql: string): this;
     close(): void;
   }
 }
