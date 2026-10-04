@@ -32,7 +32,10 @@ services:
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"
+      # Published port on the host. Default: loopback only (NPM on the same host reaches the container via
+      # npm_shared instead). A reverse proxy on ANOTHER machine (e.g. Traefik) needs HOST_BIND set to this
+      # host's LAN IP (or 0.0.0.0) and, if 3000 is taken, a different HOST_PORT.
+      - "${HOST_BIND:-127.0.0.1}:${HOST_PORT:-3000}:3000"
     environment:
       DATABASE_URL: "file:/data/db/prod.db"
       UPLOAD_DIR: "/data/uploads"
@@ -69,12 +72,16 @@ services:
       - upload_data:/data/uploads
     networks:
       - default
-      - npm_shared
+      - proxy
 
 volumes:
   db_data:
   upload_data:
 
 networks:
-  npm_shared:
-    external: true
+  # The shared network NPM runs on. Defaults to the existing external "npm_shared". On a host without NPM
+  # (e.g. the Traefik-fronted main machine) set PROXY_NETWORK_EXTERNAL=false: compose then creates the network
+  # itself instead of failing with "network npm_shared declared as external, but could not be found".
+  proxy:
+    name: ${PROXY_NETWORK:-npm_shared}
+    external: ${PROXY_NETWORK_EXTERNAL:-true}

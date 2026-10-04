@@ -70,6 +70,21 @@ version** (deploy both; the schema travels with the data).
 
 Without `SYNC_PEER_URL` the site runs standalone and none of this applies.
 
+## Stack settings for a host without NPM (the Traefik-fronted main machine)
+
+The compose file joins an external Docker network `npm_shared` (where NPM lives) and publishes the app on
+`127.0.0.1:3000`. On a host that has no NPM, and whose proxy runs on another machine, set in that stack's
+environment:
+
+| Variable | Value | Why |
+| --- | --- | --- |
+| `PROXY_NETWORK_EXTERNAL` | `false` | compose creates the network itself instead of failing with "network npm_shared declared as external, but could not be found" |
+| `PROXY_NETWORK` | `cv-site-proxy` (optional) | name for that network |
+| `HOST_BIND` | this host's LAN IP, e.g. `192.168.1.20` (or `0.0.0.0`) | Traefik is on another machine, so loopback is not reachable |
+| `HOST_PORT` | `3000` (default; change if taken) | the published port Traefik's `STANDBY-HOST-IP:PORT` points at |
+
+Amber keeps the defaults (external `npm_shared`, loopback port 3000). The port inside the container is always 3000.
+
 ## Traefik (on the machine in front of the main host)
 
 Adjust names and addresses; check the Traefik docs for your version (`failover` needs a health check on the main
