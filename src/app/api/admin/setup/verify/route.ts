@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { prisma } from "@/lib/prisma";
 import { rpID, expectedOrigin } from "@/lib/webauthn";
-import { isValidBootstrapToken } from "@/lib/bootstrap-token";
+import { canRegisterPasskey, isValidBootstrapToken } from "@/lib/bootstrap-token";
 import { CHALLENGE_COOKIE, readChallenge } from "@/lib/webauthn-challenge";
 import { ADMIN_SESSION_COOKIE, issueAdminSessionCookieValue, adminSessionCookieOptions } from "@/lib/admin-session";
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   }
 
   const existingCount = await prisma.adminPasskey.count();
-  if (existingCount > 0) {
+  if (!canRegisterPasskey(token, existingCount)) {
     return Response.json({ error: "An admin passkey is already registered." }, { status: 409 });
   }
 

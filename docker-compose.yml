@@ -54,6 +54,16 @@ services:
       DEEPL_API_KEY: ${DEEPL_API_KEY:-}
       LIBRETRANSLATE_URL: ${LIBRETRANSLATE_URL:-}
       LIBRETRANSLATE_API_KEY: ${LIBRETRANSLATE_API_KEY:-}
+      # Optional two-host redundancy (see docs/REDUNDANCY.md). Set SYNC_PEER_URL and the same SYNC_TOKEN on both hosts;
+      # SITE_ROLE is "preferred" on the host that normally takes edits and "standby" on the other.
+      SITE_ROLE: ${SITE_ROLE:-preferred}
+      SYNC_PEER_URL: ${SYNC_PEER_URL:-}
+      SYNC_TOKEN: ${SYNC_TOKEN:-}
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-15}
+      SYNC_ON_CONFLICT: ${SYNC_ON_CONFLICT:-}
+      # Passkeys on several hostnames: a parent domain and the allowed origins (comma separated).
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
+      WEBAUTHN_ORIGINS: ${WEBAUTHN_ORIGINS:-}
     volumes:
       - db_data:/data/db
       - upload_data:/data/uploads

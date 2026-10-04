@@ -1,15 +1,6 @@
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@/generated/prisma/client";
-
-function dbFilePath(): string {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
-  if (url === ":memory:") return url;
-  if (!url.startsWith("file:")) {
-    throw new Error(`DATABASE_URL must start with "file:", got: ${url}`);
-  }
-  return url.slice("file:".length);
-}
+import { dbFilePath } from "@/lib/db-path";
 
 function createClient() {
   const adapter = new PrismaBetterSqlite3({ url: dbFilePath() });
@@ -30,3 +21,10 @@ export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
     return Reflect.get(client as object, prop, receiver);
   },
 });
+
+/** Drops the cached client so the next query opens the database file afresh (used after a replica swaps in a new copy). */
+export async function resetPrismaClient(): Promise<void> {
+  const old = globalForPrisma.prisma;
+  globalForPrisma.prisma = undefined;
+  if (old) await old.$disconnect().catch(() => {});
+}

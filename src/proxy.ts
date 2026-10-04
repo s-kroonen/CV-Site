@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE, isValidAdminSession } from "@/lib/admin-session";
+import { syncGate } from "@/lib/site-role";
 import { LOCALE_COOKIE, localizedPath, negotiateLocale, splitLocale, isLocale } from "@/lib/i18n/config";
 
 const PUBLIC_PREFIXES = [
@@ -35,6 +36,15 @@ function adminGate(request: NextRequest) {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Two-host sync: answer 503 while this host is still catching up, and refuse edits unless it may write.
+  const gate = syncGate(pathname);
+  if (gate) {
+    return new Response(
+      pathname.startsWith("/api/") ? JSON.stringify({ error: gate.message }) : gate.message,
+      { status: gate.status, headers: { "Content-Type": pathname.startsWith("/api/") ? "application/json" : "text/plain; charset=utf-8", "Retry-After": "10", "Cache-Control": "no-store" } },
+    );
+  }
 
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) return adminGate(request);
   if (NOT_LOCALIZED.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();

@@ -72,6 +72,10 @@ export const socialImage = (lang: Locale) => ({
  * page instead of merging them, so each page must carry the whole set - otherwise it
  * silently loses the canonical link, hreflang links and the social image.
  */
+/** The layout appends " · Storm Kroonen"; keep the full <title> within ~70 characters for search results. */
+const MAX_PAGE_TITLE = 54;
+export const shortTitle = (title: string) => (title.length <= MAX_PAGE_TITLE ? title : `${title.slice(0, MAX_PAGE_TITLE - 1).trimEnd()}…`);
+
 export function pageMetadata(opts: {
   lang: Locale;
   title: string;
@@ -82,6 +86,7 @@ export function pageMetadata(opts: {
 }): Metadata {
   const image = opts.image ?? socialImage(opts.lang);
   const url = localizedPath(opts.lang, opts.path);
+  opts = { ...opts, title: shortTitle(opts.title) };
   return {
     title: opts.title,
     description: opts.description,

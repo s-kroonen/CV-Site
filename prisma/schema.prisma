@@ -230,3 +230,14 @@ model Translation {
 
   @@unique([entity, entityId, lang])
 }
+
+// Single row (id 1) describing the current state of the data, for two-host synchronisation
+// (docs/REDUNDANCY.md). SQLite triggers (see the sync_meta migration) bump `revision` and give `token` a
+// new random value on every insert/update/delete in any other table, so two hosts can tell whether their
+// copies are the same, one is ahead, or both changed independently. Never written by application code.
+model SyncMeta {
+  id        Int      @id
+  revision  Int      @default(0)
+  token     String
+  updatedAt DateTime @default(now())
+}

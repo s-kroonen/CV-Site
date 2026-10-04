@@ -96,7 +96,7 @@ const en = {
     educationDescription: "Education of {name}: {list}",
     projectsDescription: "Projects by {name}: {list}",
     skillsDescription: "Skills of {name}: {list}",
-    contactDescription: "Get in touch using the contact form.",
+    contactDescription: "Get in touch with Storm Kroonen using the contact form.",
     projectNotFound: "Project not found",
   },
   status: {
@@ -209,7 +209,7 @@ const nl: Dictionary = {
     educationDescription: "Opleiding van {name}: {list}",
     projectsDescription: "Projecten van {name}: {list}",
     skillsDescription: "Vaardigheden van {name}: {list}",
-    contactDescription: "Neem contact op via het contactformulier.",
+    contactDescription: "Neem contact op met Storm Kroonen via het contactformulier.",
     projectNotFound: "Project niet gevonden",
   },
   status: {
