@@ -29,6 +29,9 @@ RUN npm run build
 # ---- runtime image
 FROM base AS runner
 ENV NODE_ENV=production
+# Commit this image was built from (shown by /api/health so a stale host is easy to spot).
+ARG BUILD_SHA=dev
+ENV BUILD_SHA=$BUILD_SHA
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN apk add --no-cache su-exec && \

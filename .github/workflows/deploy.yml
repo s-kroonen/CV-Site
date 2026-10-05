@@ -43,6 +43,7 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
+          build-args: BUILD_SHA=${{ github.event.workflow_run.head_sha }}
           tags: |
             ${{ steps.image.outputs.value }}:latest
             ${{ steps.image.outputs.value }}:${{ github.event.workflow_run.head_sha }}

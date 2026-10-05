@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const host = process.env.SITE_NAME?.trim() || null;
-  if (!syncConfigured()) return Response.json({ status: "ok", sync: false, host });
+  const version = process.env.BUILD_SHA?.slice(0, 7) || null; // commit the running image was built from
+  if (!syncConfigured()) return Response.json({ status: "ok", sync: false, host, version });
   const status = readSyncStatus();
   const ready = !!status?.ready;
   return Response.json(
@@ -16,6 +17,7 @@ export async function GET() {
       status: ready ? "ok" : "syncing",
       sync: true,
       host,
+      version,
       role: status?.preferred === false ? "standby" : "preferred",
       canWrite: !!status?.canWrite,
       reason: status?.reason ?? "starting",
