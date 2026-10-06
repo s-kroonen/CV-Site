@@ -6,7 +6,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 // Tab order left to right. The backdrop is a wide strip of glows and the
 // visible window slides along it as you move between tabs: later tabs slide
 // the background left, earlier ones slide it back right.
-const TABS = ["/", "/experience", "/projects", "/skills", "/education", "/contact"];
+const TABS = ["/", "/education", "/experience", "/projects", "/skills", "/contact"];
 const STEP_VW = 34; // how far the strip moves per tab
 
 // Positions on the strip (vw/vh from the top-left of the first screen).

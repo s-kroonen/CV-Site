@@ -51,3 +51,6 @@ next-env.d.ts
 .idea/
 .claude/
 .vscode/
+
+# PRIVATE: reusable site template + operations notes. Never commit; moves to a private repo later.
+/site-template/

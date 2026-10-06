@@ -7,6 +7,7 @@ import type { Locale } from "./config";
 const en = {
   nav: {
     label: "Primary",
+    menu: "Menu",
     overview: "Overview",
     experience: "Experience",
     projects: "Projects",
@@ -107,6 +108,17 @@ const en = {
     experiment: "Experiment",
     other: "Other projects",
   },
+  projectsPage: {
+    searchLabel: "Search projects",
+    searchPlaceholder: "Search by name, technology or status",
+    statusLabel: "Status",
+    allStatuses: "All",
+    expandAll: "Expand all",
+    collapseAll: "Collapse all",
+    noResults: "No projects match. Try a different search or status.",
+    count: "{n} projects",
+    countOne: "1 project",
+  },
   kinds: {
     all: "All projects",
     personal: "Personal",
@@ -120,6 +132,7 @@ export type Dictionary = typeof en;
 const nl: Dictionary = {
   nav: {
     label: "Hoofdmenu",
+    menu: "Menu",
     overview: "Overzicht",
     experience: "Ervaring",
     projects: "Projecten",
@@ -219,6 +232,17 @@ const nl: Dictionary = {
     discontinued: "Stopgezet",
     experiment: "Experiment",
     other: "Overige projecten",
+  },
+  projectsPage: {
+    searchLabel: "Zoek projecten",
+    searchPlaceholder: "Zoek op naam, technologie of status",
+    statusLabel: "Status",
+    allStatuses: "Alle",
+    expandAll: "Alles openklappen",
+    collapseAll: "Alles inklappen",
+    noResults: "Geen projecten gevonden. Probeer een andere zoekopdracht of status.",
+    count: "{n} projecten",
+    countOne: "1 project",
   },
   kinds: {
     all: "Alle projecten",

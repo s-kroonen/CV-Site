@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { RootShell } from "@/components/RootShell";
 import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { Backdrop } from "@/components/site/Backdrop";
+import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { getLastUpdated, getNavTabs, getProfile } from "@/lib/data";
+import { getLastUpdated, getNavTabs, getProfile, hasPrivateContact } from "@/lib/data";
+import { getTurnstileSiteKey } from "@/lib/turnstile-config";
 import { LOCALES, isLocale } from "@/lib/i18n/config";
 import { fmt, getDictionary } from "@/lib/i18n/dictionary";
 import { languageAlternates, alternateTypes, siteUrl, snippet, socialImage } from "@/lib/seo";
@@ -64,7 +66,7 @@ export default async function SiteLayout({
   if (!isLocale(lang)) notFound();
 
   const dictionary = getDictionary(lang);
-  const [profile, tabs, updated] = await Promise.all([getProfile(lang), getNavTabs(lang), getLastUpdated()]);
+  const [profile, tabs, updated, privateContact] = await Promise.all([getProfile(lang), getNavTabs(lang), getLastUpdated(), hasPrivateContact()]);
   const updatedLabel = updated
     ? fmt(dictionary.common.lastUpdated, {
         date: new Intl.DateTimeFormat(lang === "nl" ? "nl-NL" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(updated),
@@ -81,12 +83,9 @@ export default async function SiteLayout({
           {dictionary.common.skipToContent}
         </a>
         <Backdrop />
-        <SiteHeader lang={lang} name={profile?.name ?? ""} avatarPath={profile?.avatarPath} tabs={tabs} />
+        <SiteHeader lang={lang} tabs={tabs} />
         <main id="main" className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6">{children}</main>
-        <footer className="flex flex-col items-center gap-1 border-t border-line py-8 text-center text-xs text-ink-muted">
-          {profile?.name ? <span>{fmt(dictionary.common.footer, { year: new Date().getFullYear(), name: profile.name })}</span> : null}
-          {updatedLabel && <span>{updatedLabel}</span>}
-        </footer>
+        <SiteFooter lang={lang} profile={profile} hasPrivateContact={privateContact} turnstileSiteKey={getTurnstileSiteKey()} updatedLabel={updatedLabel} />
       </LocaleProvider>
     </RootShell>
   );

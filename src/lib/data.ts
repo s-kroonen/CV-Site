@@ -147,12 +147,12 @@ export async function getNavTabs(lang: Locale): Promise<{ href: string; label: s
   ]);
   const t = getDictionary(lang).nav;
   const tab = (path: string, label: string) => ({ href: localizedPath(lang, path), label });
+  // Most relevant first. Contact is not a tab: the contact form lives in the footer of every page.
   return [
     tab("/", t.overview),
+    ...(education ? [tab("/education", t.education)] : []),
     ...(experience ? [tab("/experience", t.experience)] : []),
     ...(projects ? [tab("/projects", t.projects)] : []),
     ...(skills ? [tab("/skills", t.skills)] : []),
-    ...(education ? [tab("/education", t.education)] : []),
-    tab("/contact", t.contact),
   ];
 }

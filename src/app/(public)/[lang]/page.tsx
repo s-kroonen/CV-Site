@@ -67,12 +67,9 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
         <section className="flex flex-col items-start gap-3 py-12 pb-24">
           <h2 className="font-[family-name:var(--font-display)] text-3xl font-medium">{t.sections.getInTouch}</h2>
           <p className="max-w-md text-ink-muted">{t.common.getInTouchText}</p>
-          <Link
-            href={localizedPath(lang, "/contact")}
-            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
-          >
+          <a href="#contact" className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90">
             {t.common.contactMe}
-          </Link>
+          </a>
         </section>
       </FadeInView>
     </>
