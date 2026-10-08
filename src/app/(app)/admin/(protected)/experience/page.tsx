@@ -17,7 +17,7 @@ export default async function AdminExperiencePage({ searchParams }: { searchPara
       title="Experience"
       view={view}
       counts={counts}
-      items={items.map((item) => ({ id: item.id, label: [item.title, item.company].filter(Boolean).join(" · ") || "(untitled)" }))}
+      items={items.map((item) => ({ id: item.id, label: [item.title, item.company].filter(Boolean).join(" · ") || "(untitled)", keywords: Array.isArray(item.tags) ? item.tags.map(String) : [] }))}
     />
   );
 }

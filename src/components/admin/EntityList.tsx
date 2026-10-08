@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import type { Entity, LifecycleView } from "@/lib/lifecycle";
 import { EmptyTrashButton, LifecycleButton } from "./LifecycleActions";
 
-export type ListItem = { id: string; label: string };
+/** `keywords` are extra searchable text (tags, tech stack) not shown in the row. */
+export type ListItem = { id: string; label: string; keywords?: string[] };
 
 const TABS: { view: LifecycleView; label: string }[] = [
   { view: "active", label: "Active" },
@@ -31,6 +35,14 @@ export function EntityList({
   items: ListItem[];
 }) {
   const base = `/admin/${entity}`;
+  const [query, setQuery] = useState("");
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const visible = terms.length
+    ? items.filter((item) => {
+        const hay = [item.label, ...(item.keywords ?? [])].join(" ").toLowerCase();
+        return terms.every((term) => hay.includes(term));
+      })
+    : items;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
@@ -60,8 +72,17 @@ export function EntityList({
         )}
       </nav>
 
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={`Search ${title.toLowerCase()}...`}
+        aria-label={`Search ${title.toLowerCase()}`}
+        className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
+      />
+
       <ul className="flex flex-col gap-3">
-        {items.map((item) => (
+        {visible.map((item) => (
           <li key={item.id} className="flex items-center justify-between gap-4 rounded-md border border-line px-4 py-3">
             <span className="min-w-0 truncate">{item.label}</span>
             <div className="flex shrink-0 gap-4">
@@ -89,6 +110,7 @@ export function EntityList({
           </li>
         ))}
         {items.length === 0 && <p className="text-ink-muted">{EMPTY[view]}</p>}
+        {items.length > 0 && visible.length === 0 && <p className="text-ink-muted">No matches for &quot;{query}&quot;.</p>}
       </ul>
     </main>
   );

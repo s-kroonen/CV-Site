@@ -17,7 +17,7 @@ export default async function AdminProjectsPage({ searchParams }: { searchParams
       title="Projects"
       view={view}
       counts={counts}
-      items={items.map((item) => ({ id: item.id, label: item.title || "(untitled)" }))}
+      items={items.map((item) => ({ id: item.id, label: item.title || "(untitled)", keywords: Array.isArray(item.techStack) ? item.techStack.map(String) : [] }))}
     />
   );
 }

@@ -21,6 +21,9 @@ Working list for the CV site. Tick items off as they land; add new ones at the b
   - [ ] Later: dedicated `Tag` table + management view (rename/merge/delete across all entities).
 - [x] **Buttons show no text**: save and other buttons render blank. Find the cause (likely text colour/background token clash or missing label) and fix across all admin buttons; check light/dark and disabled/loading states.
 
+- [x] **Admin list search**: filter box on every admin list (matches title/company/etc. plus tags and tech stack).
+- [ ] **npm audit**: `braces` (via `eslint-config-next` > `fast-glob`, dev-only) has no patched release yet. Don't take the `--force` fix (downgrades to eslint-config-next 14). Re-check `npm audit` periodically.
+
 ## 2. Trash & archive
 
 - [x] **Archive**: hide outdated/irrelevant entities from the public site without deleting them (`archivedAt` on every entity); archived list in admin with restore.
