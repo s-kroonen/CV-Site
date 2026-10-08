@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/server";
+import type { AuthenticatorTransport } from "@simplewebauthn/server";
 import { prisma } from "@/lib/prisma";
 import { rpID } from "@/lib/webauthn";
 import {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     userVerification: "preferred",
     allowCredentials: passkeys.map((p) => ({
       id: p.credentialId,
-      transports: (p.transports as AuthenticatorTransportFuture[] | null) ?? undefined,
+      transports: (p.transports as AuthenticatorTransport[] | null) ?? undefined,
     })),
   });
 
