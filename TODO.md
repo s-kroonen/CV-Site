@@ -137,3 +137,5 @@ An AI tool must be able to **add, edit and remove** entities (and archive/restor
 - [x] Verified with two real server processes (boot 503 -> 200, failover, edit while the other host is down, catch-up).
 - [ ] Deploy: env on both stacks, Traefik routers (docs), register the new passkey, delete the unused SSH sync secrets and `sync` user, verify `storm.kroon-en.nl` in Search Console.
 - [ ] Not yet run as Docker images in production.
+- [x] Catch-up redeploy on boot (`scripts/boot/`, docs/DEPLOYMENT.md section 7): a host that was off during a deploy pulls the new image when it boots.
+- [ ] Install the boot redeploy on both hosts and test with a reboot.

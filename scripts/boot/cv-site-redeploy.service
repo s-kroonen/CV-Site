@@ -1,0 +1,17 @@
+[Unit]
+Description=Redeploy CV site stack (pull latest image) after boot
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cv-site-redeploy-on-boot.sh
+# Retry if Portainer or the network isn't ready yet.
+Restart=on-failure
+RestartSec=30
+StartLimitIntervalSec=900
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

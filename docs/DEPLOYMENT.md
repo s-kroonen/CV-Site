@@ -240,6 +240,32 @@ copied one way only and would have overwritten edits made on the other host.)
 - Stop the `web` container on one host and confirm NPM shows the maintenance
   page, not a raw error
 
+## 7. Catch-up redeploy on boot
+
+The deploy job cannot reach a host that is switched off, and a booting host restarts `web` from the image it
+already has. Result: it serves an old UI and refuses to sync data (`/api/health` shows "different version").
+To fix this, each host runs the same Portainer redeploy (with image pull) once at boot.
+
+On each host (needs `curl` and `jq`):
+
+```sh
+sudo install -m 755 scripts/boot/redeploy-on-boot.sh /usr/local/bin/cv-site-redeploy-on-boot.sh
+sudo install -m 644 scripts/boot/cv-site-redeploy.service /etc/systemd/system/
+sudo install -d -m 700 /etc/cv-site
+sudo tee /etc/cv-site/redeploy.env >/dev/null <<'ENV'
+PORTAINER_URL=https://portainer.example.com
+PORTAINER_TOKEN=...   # same kind of token as the PRIMARY_/SECONDARY_ secrets
+STACK_ID=...
+ENDPOINT_ID=...
+ENV
+sudo chmod 600 /etc/cv-site/redeploy.env
+sudo systemctl daemon-reload && sudo systemctl enable --now cv-site-redeploy.service
+```
+
+- It waits up to 5 minutes for Portainer, refuses to run if the stack has no env vars, and retries on failure.
+- Check with `journalctl -u cv-site-redeploy`. `web` is recreated once per boot, so expect a short blip.
+- The token lives only on that host, readable by root.
+
 ## Moving content between hosts / backups
 
 Admin -> Import & export (`/admin/data`) downloads a ZIP with all content
